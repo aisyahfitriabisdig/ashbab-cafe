@@ -48,93 +48,143 @@ require_once __DIR__ . '/includes/header.php';
 <!-- ============================================================
      HERO SECTION
      ============================================================ -->
-<section class="hero-section" id="home">
-    <div class="container">
-        <div class="row align-items-center min-vh-100">
-            <div class="col-lg-6 hero-text" data-aos="fade-right">
-                <div class="hero-badge">
+<?php
+$banners = [];
+if (!empty($settings['banner'])) {
+    $decoded = json_decode($settings['banner'], true);
+    $banners = is_array($decoded) ? array_values(array_filter($decoded)) : [$settings['banner']];
+}
+$bannerCount = count($banners);
+?>
+<section class="hero-section <?= $bannerCount > 0 ? 'has-hero-bg' : '' ?>" id="home">
+    <!-- Full Background Slideshow / Static Background -->
+    <div class="hero-bg-wrapper" aria-hidden="true">
+        <?php if ($bannerCount > 0): ?>
+            <?php foreach ($banners as $idx => $b): ?>
+                <div class="hero-bg-slide <?= $idx === 0 ? 'active' : '' ?>"
+                     style="background-image: url('<?= e(assetUrl($b)) ?>');"></div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        <div class="hero-bg-overlay"></div>
+    </div>
+
+    <div class="container position-relative" style="z-index:3">
+        <div class="row align-items-center min-vh-100 py-5">
+            <div class="col-lg-8 col-xl-7 hero-text hero-noise-surface" data-aos="fade-right">
+                <div class="hero-badge hero-grain-item">
                     <i class="fa-solid fa-mug-hot me-2"></i>Selamat Datang di <?= e($cafeName) ?>
                 </div>
-                <h1 class="hero-title">
+                <h1 class="hero-title hero-grain-text">
                     Nikmati Kopi <span>Terbaik</span><br>Setiap Hari
                 </h1>
                 <p class="hero-subtitle">
                     Pesan menu favorit Anda langsung dari meja. Cepat, mudah, dan lezat. Pengalaman kafe yang sesungguhnya.
                 </p>
-                <div class="d-flex gap-3 flex-wrap">
-                    <a href="<?= APP_URL ?>/menu.php" class="btn-primary-cafe">
+                <div class="d-flex gap-3 flex-wrap hero-cta-group">
+                    <a href="<?= APP_URL ?>/menu.php" class="btn-primary-cafe hero-grain-item">
                         <i class="fa-solid fa-utensils"></i> Pesan Sekarang
                     </a>
-                    <a href="#menu" class="btn-outline-cafe">
+                    <a href="#menu" class="btn-outline-cafe hero-grain-item">
                         <i class="fa-solid fa-eye"></i> Lihat Menu
                     </a>
                 </div>
                 <!-- Stats row -->
-                <div class="row mt-5 g-3">
-                    <div class="col-4">
-                        <div class="text-center">
-                            <div class="fw-800 text-white fs-3">50+</div>
+                <div class="row mt-5 g-3 hero-stats-row">
+                    <div class="col-4 col-sm-3">
+                        <div class="hero-stat-item text-center text-sm-start">
+                            <div class="fw-800 text-white fs-3 hero-grain-text">50+</div>
                             <div class="text-white-50 small">Menu Pilihan</div>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="text-center">
-                            <div class="fw-800 text-white fs-3">1K+</div>
+                    <div class="col-4 col-sm-3">
+                        <div class="hero-stat-item text-center text-sm-start">
+                            <div class="fw-800 text-white fs-3 hero-grain-text">1K+</div>
                             <div class="text-white-50 small">Pelanggan Puas</div>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="text-center">
-                            <div class="fw-800 text-white fs-3">5★</div>
+                    <div class="col-4 col-sm-3">
+                        <div class="hero-stat-item text-center text-sm-start">
+                            <div class="fw-800 text-white fs-3 hero-grain-text">5★</div>
                             <div class="text-white-50 small">Rating</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 hero-image-wrap" data-aos="fade-left">
-                <?php 
-                $banners = [];
-                if (!empty($settings['banner'])) {
-                    $decoded = json_decode($settings['banner'], true);
-                    $banners = is_array($decoded) ? $decoded : [$settings['banner']];
-                }
-                
-                if (count($banners) > 1): ?>
-                    <div id="heroBannerCarousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-indicators">
-                            <?php foreach ($banners as $idx => $b): ?>
-                                <button type="button" data-bs-target="#heroBannerCarousel" data-bs-slide-to="<?= $idx ?>" <?= $idx === 0 ? 'class="active" aria-current="true"' : '' ?>></button>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="carousel-inner rounded-4 shadow">
-                            <?php foreach ($banners as $idx => $b): ?>
-                                <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                    <img src="<?= e(assetUrl($b)) ?>" class="d-block w-100" alt="Banner <?= $idx+1 ?>" style="height:460px;object-fit:cover">
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    </div>
-                <?php elseif (count($banners) === 1): ?>
-                    <img src="<?= e(assetUrl($banners[0])) ?>" alt="Banner" class="img-fluid rounded-4 shadow" style="height:460px;width:100%;object-fit:cover">
-                <?php else: ?>
-                    <div class="hero-image-placeholder">☕</div>
-                <?php endif; ?>
-            </div>
         </div>
     </div>
+
+    <?php if ($bannerCount > 1): ?>
+    <!-- Slideshow Pagination Dots -->
+    <div class="hero-slide-dots" id="heroSlideDots" role="tablist" aria-label="Pilih slide gambar hero">
+        <?php foreach ($banners as $idx => $b): ?>
+            <button type="button"
+                    class="hero-slide-dot <?= $idx === 0 ? 'active' : '' ?>"
+                    data-slide-index="<?= $idx ?>"
+                    aria-label="Slide <?= $idx + 1 ?>"
+                    aria-selected="<?= $idx === 0 ? 'true' : 'false' ?>"></button>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
     <!-- Decorative wave -->
-    <div style="position:absolute;bottom:0;left:0;right:0">
+    <div style="position:absolute;bottom:0;left:0;right:0;z-index:3;pointer-events:none">
         <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg"><path fill="#ffffff" d="M0,40 C360,80 1080,0 1440,40 L1440,60 L0,60 Z"/></svg>
     </div>
 </section>
+
+<?php if ($bannerCount > 1): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.hero-bg-slide');
+    const dots   = document.querySelectorAll('.hero-slide-dot');
+    if (slides.length <= 1) return;
+
+    let currentSlide = 0;
+    let slideTimer   = null;
+    const SLIDE_INTERVAL = 5500; // 5.5 detik
+
+    function goToSlide(index) {
+        slides[currentSlide].classList.remove('active');
+        if (dots[currentSlide]) {
+            dots[currentSlide].classList.remove('active');
+            dots[currentSlide].setAttribute('aria-selected', 'false');
+        }
+        currentSlide = (index + slides.length) % slides.length;
+        slides[currentSlide].classList.add('active');
+        if (dots[currentSlide]) {
+            dots[currentSlide].classList.add('active');
+            dots[currentSlide].setAttribute('aria-selected', 'true');
+        }
+    }
+
+    function startTimer() {
+        stopTimer();
+        slideTimer = setInterval(function() {
+            goToSlide(currentSlide + 1);
+        }, SLIDE_INTERVAL);
+    }
+
+    function stopTimer() {
+        if (slideTimer) {
+            clearInterval(slideTimer);
+            slideTimer = null;
+        }
+    }
+
+    dots.forEach(function(dot) {
+        dot.addEventListener('click', function() {
+            const idx = parseInt(this.getAttribute('data-slide-index'), 10);
+            if (!isNaN(idx) && idx !== currentSlide) {
+                goToSlide(idx);
+                startTimer();
+            }
+        });
+    });
+
+    startTimer();
+});
+</script>
+<?php endif; ?>
 
 <!-- ============================================================
      BEST SELLER SECTION

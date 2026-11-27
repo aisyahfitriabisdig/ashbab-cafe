@@ -46,17 +46,57 @@ foreach ($fields as $field => $label) {
     }
 }
 
-// Handle banners (multiple)
-$bannerPaths = [];
+// Handle banners (ordering, replacing individual slides, and adding multiple new slides)
+$existingBanners = [];
 if (!empty($current['banner'])) {
     $decoded = json_decode($current['banner'], true);
     if (is_array($decoded)) {
-        $bannerPaths = $decoded;
-    } else if (is_string($current['banner'])) {
-        $bannerPaths = [$current['banner']];
+        $existingBanners = array_values(array_filter($decoded));
+    } elseif (is_string($current['banner'])) {
+        $existingBanners = [$current['banner']];
     }
 }
 
+// Start from user-submitted order if provided (only allowing known existing banner paths)
+if (isset($_POST['banner_order']) && is_array($_POST['banner_order'])) {
+    $submittedOrder = [];
+    foreach ($_POST['banner_order'] as $bPath) {
+        $bPath = trim((string)$bPath);
+        if ($bPath !== '' && in_array($bPath, $existingBanners, true)) {
+            $submittedOrder[] = $bPath;
+        }
+    }
+    $bannerPaths = $submittedOrder;
+} else {
+    $bannerPaths = $existingBanners;
+}
+
+// Handle replacing existing individual banner slides (banner_replace[])
+if (!empty($_FILES['banner_replace']['name']) && is_array($_FILES['banner_replace']['name'])) {
+    foreach ($_FILES['banner_replace']['name'] as $idx => $repName) {
+        if (($repName ?? '') !== '' && isset($bannerPaths[$idx])) {
+            $fileArray = [
+                'name'     => $_FILES['banner_replace']['name'][$idx],
+                'type'     => $_FILES['banner_replace']['type'][$idx],
+                'tmp_name' => $_FILES['banner_replace']['tmp_name'][$idx],
+                'error'    => $_FILES['banner_replace']['error'][$idx],
+                'size'     => $_FILES['banner_replace']['size'][$idx],
+            ];
+            $newSlidePath = uploadFile($fileArray, 'banner');
+            if (!$newSlidePath) {
+                $err = getLastUploadError() ?: 'Periksa format dan ukuran file.';
+                jsonResponse(['success' => false, 'message' => "Gagal mengganti gambar Hero #" . ($idx + 1) . ": {$err}"]);
+            }
+            $oldSlidePath = $bannerPaths[$idx];
+            $bannerPaths[$idx] = $newSlidePath;
+            if ($oldSlidePath !== $newSlidePath && !in_array($oldSlidePath, $bannerPaths, true)) {
+                deleteUploadedFile($oldSlidePath);
+            }
+        }
+    }
+}
+
+// Handle newly added banners (banner[])
 if (!empty($_FILES['banner']['name']) && is_array($_FILES['banner']['name'])) {
     $count = count($_FILES['banner']['name']);
     for ($i = 0; $i < $count; $i++) {

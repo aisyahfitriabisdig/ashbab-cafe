@@ -124,28 +124,52 @@ require_once __DIR__ . '/../includes/header.php';
               <input type="file" class="admin-input" name="about_image" accept="image/*">
             </div>
 
-            <!-- Banner -->
+            <!-- Banner Hero Background -->
             <div class="mb-4">
-              <label class="admin-form-label">Banner Hero (Bisa lebih dari 1)</label>
+              <label class="admin-form-label">Gambar Background Hero (Slideshow)</label>
+              <small class="text-muted d-block mb-2" style="font-size:.78rem">
+                Unggah 1 gambar untuk background statis, atau beberapa gambar untuk slideshow otomatis (5–6 detik). Gunakan tombol panah untuk mengatur urutan, ikon pensil untuk mengganti gambar, dan ikon silang untuk menghapus.
+              </small>
               <?php 
               $banners = [];
               if (!empty($settings['banner'])) {
                   $decoded = json_decode($settings['banner'], true);
-                  $banners = is_array($decoded) ? $decoded : [$settings['banner']];
+                  $banners = is_array($decoded) ? array_values(array_filter($decoded)) : [$settings['banner']];
               }
-              if (!empty($banners)): ?>
-              <div class="row g-2 mb-3">
+              ?>
+              <?php if (!empty($banners)): ?>
+              <div class="row g-2 mb-3" id="bannerListContainer">
                 <?php foreach($banners as $index => $b): ?>
-                <div class="col-6 position-relative" id="banner-<?= $index ?>">
-                  <img src="<?= e(assetUrl($b)) ?>" style="width:100%;border-radius:10px;height:80px;object-fit:cover">
-                  <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1" onclick="deleteBanner('<?= e($b) ?>', <?= $index ?>)" title="Hapus">
+                <div class="col-6 position-relative banner-manage-item" id="banner-<?= $index ?>" data-banner-path="<?= e($b) ?>">
+                  <input type="hidden" name="banner_order[]" value="<?= e($b) ?>" class="banner-order-input">
+                  <input type="file" name="banner_replace[]" class="d-none banner-replace-input" accept="image/*" onchange="previewReplaceBanner(this)">
+                  <div class="position-relative rounded-3 overflow-hidden border" style="height:96px;background:#111">
+                    <img src="<?= e(assetUrl($b)) ?>" class="banner-thumb-img" style="width:100%;height:100%;object-fit:cover">
+                    <span class="badge bg-dark bg-opacity-75 position-absolute top-0 start-0 m-1 banner-order-badge">#<?= $index + 1 ?></span>
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1 lh-1" onclick="deleteBanner(this)" title="Hapus Gambar">
                       <i class="fa-solid fa-xmark"></i>
-                  </button>
+                    </button>
+                    <div class="position-absolute bottom-0 start-0 end-0 p-1 d-flex justify-content-between align-items-center" style="background:rgba(0,0,0,0.65)">
+                      <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveBanner(this, -1)" title="Geser Maju">
+                          <i class="fa-solid fa-chevron-left" style="font-size:.7rem"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveBanner(this, 1)" title="Geser Mundur">
+                          <i class="fa-solid fa-chevron-right" style="font-size:.7rem"></i>
+                        </button>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-warning py-0 px-2 fw-600" style="font-size:.7rem" onclick="triggerReplaceBanner(this)" title="Ubah/Ganti Gambar Ini">
+                        <i class="fa-solid fa-pen me-1"></i>Ganti
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <?php endforeach; ?>
               </div>
               <?php endif; ?>
-              <input type="file" class="admin-input" name="banner[]" multiple accept="image/*">
+              <label class="admin-form-label small text-muted mb-1">Tambah Gambar Hero Baru (Bisa pilih beberapa sekaligus)</label>
+              <input type="file" class="admin-input" name="banner[]" id="newBannerInput" multiple accept="image/*">
+              <div class="row g-2 mt-2" id="newBannerPreviewWrap" style="display:none"></div>
             </div>
           </div>
         </div>
@@ -212,21 +236,109 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
     });
 });
 
-function deleteBanner(path, index) {
-  if (confirm('Yakin ingin menghapus banner ini?')) {
+function refreshBannerBadges() {
+  const items = document.querySelectorAll('#bannerListContainer .banner-manage-item');
+  items.forEach((el, idx) => {
+    const badge = el.querySelector('.banner-order-badge');
+    if (badge) badge.textContent = '#' + (idx + 1);
+  });
+}
+
+function saveBannerOrderAjax() {
+  const inputs = document.querySelectorAll('#bannerListContainer .banner-order-input');
+  const order = Array.from(inputs).map(inp => inp.value);
+  fetch(APP_URL + '/ajax/delete_banner.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN) + '&action=reorder&order=' + encodeURIComponent(JSON.stringify(order))
+  }).then(r => r.json()).then(res => {
+    if (res.success) {
+      showToast('Urutan gambar Hero diperbarui.', 'success');
+    }
+  }).catch(() => {});
+}
+
+function moveBanner(btn, direction) {
+  const item = btn.closest('.banner-manage-item');
+  const container = document.getElementById('bannerListContainer');
+  if (!item || !container) return;
+
+  if (direction < 0 && item.previousElementSibling) {
+    container.insertBefore(item, item.previousElementSibling);
+  } else if (direction > 0 && item.nextElementSibling) {
+    container.insertBefore(item.nextElementSibling, item);
+  } else {
+    return;
+  }
+  refreshBannerBadges();
+  saveBannerOrderAjax();
+}
+
+function triggerReplaceBanner(btn) {
+  const item = btn.closest('.banner-manage-item');
+  const fileInput = item?.querySelector('.banner-replace-input');
+  fileInput?.click();
+}
+
+function previewReplaceBanner(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const item = input.closest('.banner-manage-item');
+  const img  = item?.querySelector('.banner-thumb-img');
+  if (!img) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    img.src = e.target.result;
+    showToast('Gambar pengganti dipilih. Klik Simpan Pengaturan untuk menyimpan.', 'info');
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteBanner(btn) {
+  const item = btn.closest('.banner-manage-item');
+  const path = item?.getAttribute('data-banner-path') || item?.querySelector('.banner-order-input')?.value || '';
+  if (!item || !path) return;
+
+  if (confirm('Yakin ingin menghapus gambar Hero ini?')) {
     fetch(APP_URL + '/ajax/delete_banner.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'csrf_token=' + CSRF_TOKEN + '&path=' + encodeURIComponent(path)
+      body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN) + '&path=' + encodeURIComponent(path)
     }).then(r => r.json()).then(res => {
       if (res.success) {
-        document.getElementById('banner-' + index).remove();
-        alertSuccess('Banner berhasil dihapus.');
+        item.remove();
+        refreshBannerBadges();
+        alertSuccess('Gambar Hero berhasil dihapus.');
       } else {
-        alertError(res.message || 'Gagal menghapus banner.');
+        alertError(res.message || 'Gagal menghapus gambar Hero.');
       }
     });
   }
 }
+
+document.getElementById('newBannerInput')?.addEventListener('change', function() {
+  const wrap = document.getElementById('newBannerPreviewWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const files = Array.from(this.files || []);
+  if (files.length === 0) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'flex';
+  files.forEach((file, idx) => {
+    const col = document.createElement('div');
+    col.className = 'col-4';
+    const reader = new FileReader();
+    reader.onload = e => {
+      col.innerHTML = `<div class="position-relative rounded-3 overflow-hidden border" style="height:64px">
+        <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">
+        <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-1" style="font-size:.65rem">Baru #${idx + 1}</span>
+      </div>`;
+    };
+    reader.readAsDataURL(file);
+    wrap.appendChild(col);
+  });
+});
 </script>
 <script src="<?= APP_URL ?>/assets/js/admin.js"></script>
