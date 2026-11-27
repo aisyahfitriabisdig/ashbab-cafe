@@ -11,7 +11,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('pageLoader');
     if (loader) {
-        setTimeout(() => loader.classList.add('hidden'), 300);
+        loader.classList.add('hidden');
     }
 });
 

@@ -25,6 +25,12 @@ $pageTitle = isset($pageTitle) ? e($pageTitle) . ' | ' . $cafeName : $cafeName;
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
     <?php endif; ?>
 
+    <!-- Preconnect CDN -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -38,6 +44,6 @@ $pageTitle = isset($pageTitle) ? e($pageTitle) . ' | ' . $cafeName : $cafeName;
     <!-- DataTables -->
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom Public CSS -->
-    <link href="<?= APP_URL ?>/assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/style.css?v=<?= APP_VERSION ?>" rel="stylesheet">
     <!-- PWA Manifest -->
     <link rel="manifest" href="<?= APP_URL ?>/manifest.json">

@@ -22,7 +22,6 @@ class Database {
             $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require";
             try {
                 $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-                $this->pdo->exec("SET TIME ZONE 'Asia/Jakarta'");
             } catch (PDOException $e) {
                 if (IS_PRODUCTION) {
                     die("Database connection error. Please check environment configuration.");

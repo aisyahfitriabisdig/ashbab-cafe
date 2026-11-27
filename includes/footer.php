@@ -22,19 +22,19 @@
     <?php if (isset($extraJS)) echo $extraJS; ?>
     <script>
         // Initialize AOS
-        AOS.init({ duration: 800, once: true, offset: 100 });
+        AOS.init({ duration: 600, once: true, offset: 80 });
         
-        // Customer Notifications Polling
+        <?php if (!empty($_SESSION['my_orders'])): ?>
+        // Customer Notifications Polling (hanya aktif jika pelanggan punya pesanan aktif)
         const GLOBAL_APP_URL = '<?= APP_URL ?>';
         function pollCustomerNotifications() {
+            if (document.hidden) return;
             fetch(GLOBAL_APP_URL + '/ajax/customer_notifications.php')
             .then(r => r.json())
             .then(res => {
                 if (res.success && res.notifications && res.notifications.length > 0) {
                     res.notifications.forEach(n => {
-                        // Tampilkan toast
                         showToast(n.title + '<br><small>' + n.message + '</small>', 'info', 5000);
-                        // Mark as read
                         fetch(GLOBAL_APP_URL + '/ajax/customer_notifications.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -46,9 +46,9 @@
             .catch(err => console.error(err));
         }
         
-        // Poll every 10 seconds
-        setInterval(pollCustomerNotifications, 10000);
-        setTimeout(pollCustomerNotifications, 1500); // initial delay
+        setInterval(pollCustomerNotifications, 20000);
+        setTimeout(pollCustomerNotifications, 2000);
+        <?php endif; ?>
     </script>
 </body>
 </html>
