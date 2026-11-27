@@ -1,0 +1,13 @@
+# File debug / test lokal yang tidak perlu dideploy ke Vercel
+test_*.php
+*.out
+.htaccess.bak
+check_login.html
+check_system.php
+fix_banner.php
+migrate.php
+migrate_notifications.php
+reset_pass.php
+setup_db.php
+database/
+
