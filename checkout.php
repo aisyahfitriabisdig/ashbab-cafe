@@ -200,8 +200,8 @@ require_once __DIR__ . '/includes/header.php';
                             </div>
                         </div>
                         <div class="mt-3">
-                            <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" id="paymentWaitingBadge" style="background:#fff8e6;border:1px solid #fbd38d;color:#b45309;font-size:.85rem;font-weight:600">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
+                            <div class="d-inline-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-pill mw-100" id="paymentWaitingBadge" style="background:#fff8e6;border:1px solid #fbd38d;color:#b45309;font-size:.83rem;font-weight:600;white-space:normal;line-height:1.4">
+                                <i class="fa-solid fa-spinner fa-spin flex-shrink-0"></i>
                                 <span id="paymentWaitText">Mendeteksi status pembayaran secara otomatis...</span>
                             </div>
                             <p class="text-muted small mt-2 mb-0" style="font-size:.78rem">

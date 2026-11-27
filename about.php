@@ -35,7 +35,7 @@ require_once __DIR__ . '/includes/header.php';
                     <?php else: ?>
                         <img src="<?= APP_URL ?>/assets/uploads/ashbab_logo.png" alt="Ashbab Cafe" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 500px; object-fit: contain; background: var(--dark); padding: 40px;">
                     <?php endif; ?>
-                    <div style="position: absolute; bottom: -30px; right: -30px; background: var(--primary); color: var(--dark); padding: 20px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(255,215,0,0.3);" class="d-none d-md-block">
+                    <div class="about-badge-float">
                         <h3 class="fw-800 mb-0">100%</h3>
                         <p class="mb-0 fw-600">Kopi Asli Pilihan</p>
                     </div>

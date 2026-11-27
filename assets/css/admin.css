@@ -475,9 +475,30 @@ table.dataTable.table-striped > tbody > tr.even > * { box-shadow: none !importan
 }
 
 @media (max-width: 576px) {
-    .page-content { padding: 16px; }
-    .stat-widget { padding: 18px; }
-    .stat-value { font-size: 1.4rem; }
+    .topbar {
+        padding: 0 12px;
+        gap: 8px;
+    }
+    .topbar-title {
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .topbar-user {
+        padding: 6px 10px;
+    }
+    .topbar-user-name,
+    .topbar-user-role {
+        display: none;
+    }
+    .notif-dropdown {
+        width: min(340px, calc(100vw - 24px));
+    }
+    .page-content { padding: 14px 12px; }
+    .admin-card { padding: 16px; }
+    .stat-widget { padding: 16px; }
+    .stat-value { font-size: 1.35rem; }
 }
 
 /* ============================================================
