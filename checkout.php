@@ -195,17 +195,26 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="mt-3">
                             <p class="text-muted mb-1">Total Pembayaran:</p>
                             <h4 class="fw-800" style="color:var(--primary)"><?= formatRupiah($total) ?></h4>
+                            <div class="small text-muted mt-1" id="qrisOrderRef" style="display:none">
+                                No. Tagihan: <strong id="qrisOrderNumber" style="color:var(--primary)">-</strong>
+                            </div>
                         </div>
-                        <button type="button" class="btn btn-outline-primary mt-3 rounded-pill px-4" id="btnCheckPayment">
-                            <i class="fa-solid fa-arrows-rotate me-2"></i>Cek Status Pembayaran
-                        </button>
+                        <div class="mt-3">
+                            <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" id="paymentWaitingBadge" style="background:#fff8e6;border:1px solid #fbd38d;color:#b45309;font-size:.85rem;font-weight:600">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <span id="paymentWaitText">Mendeteksi status pembayaran secara otomatis...</span>
+                            </div>
+                            <p class="text-muted small mt-2 mb-0" style="font-size:.78rem">
+                                Silakan scan & selesaikan pembayaran QRIS. Halaman ini akan otomatis berubah begitu pembayaran terkonfirmasi.
+                            </p>
+                        </div>
                     </div>
 
                     <div id="paymentSuccessInfo" class="mt-4 text-center" style="display:none">
                         <div class="p-4 rounded-3" style="background:rgba(25, 135, 84, 0.1); border: 2px dashed #198754;">
                             <i class="fa-solid fa-circle-check fa-3x text-success mb-2"></i>
-                            <h5 class="text-success fw-700 mb-0">Pembayaran Berhasil</h5>
-                            <p class="text-muted small mt-1">Terima kasih, pembayaran Anda telah kami terima.</p>
+                            <h5 class="text-success fw-700 mb-0">Pembayaran Berhasil Dikonfirmasi</h5>
+                            <p class="text-muted small mt-1 mb-0">Terima kasih, pembayaran QRIS Anda telah terverifikasi. Silakan klik tombol <b>Buat Pesanan</b> di bawah.</p>
                         </div>
                     </div>
                     
@@ -251,23 +260,84 @@ const CSRF_TOKEN = '<?= generateCSRF() ?>';
 
 
 
-// Simulation of QRIS Payment checking
-document.getElementById('btnCheckPayment')?.addEventListener('click', function() {
-    const btn = this;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Mengecek...';
-    
-    // Simulate API delay
-    setTimeout(() => {
-        document.getElementById('qrisInfo').style.display = 'none';
-        document.getElementById('paymentSuccessInfo').style.display = 'block';
-        document.getElementById('paymentVerified').value = '1';
-        
-        const btnSubmit = document.getElementById('btnSubmitOrder');
-        btnSubmit.disabled = false;
-        
-        showToast('Pembayaran berhasil dikonfirmasi!', 'success');
-    }, 1500);
+// Automatic Real-Time QRIS Payment Detection
+let paymentPollTimer = null;
+let syncDebounceTimer = null;
+let isPaymentConfirmed = false;
+let isCheckingPayment = false;
+
+function markPaymentAsConfirmed(orderNumber) {
+    if (isPaymentConfirmed) return;
+    isPaymentConfirmed = true;
+    if (paymentPollTimer) {
+        clearInterval(paymentPollTimer);
+        paymentPollTimer = null;
+    }
+
+    document.getElementById('qrisInfo').style.display = 'none';
+    document.getElementById('paymentSuccessInfo').style.display = 'block';
+    document.getElementById('paymentVerified').value = '1';
+
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    if (btnSubmit) btnSubmit.disabled = false;
+
+    showToast('Pembayaran QRIS berhasil dikonfirmasi!', 'success');
+}
+
+function checkPaymentStatus() {
+    if (isPaymentConfirmed || isCheckingPayment) return;
+    isCheckingPayment = true;
+
+    const formEl = document.getElementById('checkoutForm');
+    const formData = new FormData(formEl);
+
+    fetch(APP_URL + '/ajax/check_payment.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(r => r.json())
+        .then(res => {
+            isCheckingPayment = false;
+            if (!res.success) return;
+
+            if (res.order_number) {
+                const refWrap = document.getElementById('qrisOrderRef');
+                const refNum  = document.getElementById('qrisOrderNumber');
+                if (refWrap && refNum) {
+                    refNum.textContent = '#' + res.order_number;
+                    refWrap.style.display = 'block';
+                }
+            }
+
+            if (res.payment_status === 'confirmed') {
+                markPaymentAsConfirmed(res.order_number);
+            } else if (res.payment_status === 'rejected') {
+                const waitText = document.getElementById('paymentWaitText');
+                if (waitText) {
+                    waitText.textContent = 'Pembayaran ditolak. Silakan hubungi kasir.';
+                }
+                showToast('Pembayaran ditolak oleh kasir.', 'error');
+            }
+        })
+        .catch(() => {
+            isCheckingPayment = false;
+        });
+}
+
+// Start automatic polling immediately & every 2.5 seconds
+checkPaymentStatus();
+paymentPollTimer = setInterval(checkPaymentStatus, 2500);
+
+// Sync customer details automatically as they type
+['customerName', 'customerPhone', 'tableNumber'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+        if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+        syncDebounceTimer = setTimeout(checkPaymentStatus, 600);
+    });
+});
+document.querySelector('textarea[name="notes"]')?.addEventListener('input', () => {
+    if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = setTimeout(checkPaymentStatus, 600);
 });
 
 // Submit

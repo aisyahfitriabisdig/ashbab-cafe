@@ -9,6 +9,7 @@
 // Notification Polling (Admin)
 // ============================================================
 let notifCount = 0;
+let notifInit  = false;
 
 function pollNotifications() {
     fetch(APP_URL + '/ajax/notifications.php?role=admin')
@@ -41,12 +42,13 @@ function pollNotifications() {
             }
 
             // New notification arrived
-            if (count > notifCount && notifCount > 0) {
-                showToast('Ada pesanan baru masuk!', 'info');
+            if (notifInit && count > notifCount) {
+                showToast('🔔 Ada pesanan / pembayaran QRIS baru!', 'info');
                 const bell = document.getElementById('notifBell');
                 if (bell) { bell.classList.add('bell-ring'); setTimeout(() => bell.classList.remove('bell-ring'), 1000); }
             }
             notifCount = count;
+            notifInit  = true;
         })
         .catch(() => {});
 }

@@ -6,6 +6,7 @@
 'use strict';
 
 let cashierNotifCount = 0;
+let cashierNotifInit  = false;
 
 // ============================================================
 // Real-time Notifications (Cashier)
@@ -23,13 +24,17 @@ function pollCashierNotifications() {
                 badge.style.display = count > 0 ? 'flex' : 'none';
             }
 
-            if (count > cashierNotifCount && cashierNotifCount > 0) {
-                showToast('🔔 Ada pesanan baru!', 'info', 5000);
+            if (cashierNotifInit && count > cashierNotifCount) {
+                showToast('🔔 Ada pesanan / pembayaran QRIS baru!', 'info', 5000);
                 playNotifSound();
                 const bell = document.getElementById('notifBell');
                 if (bell) { bell.classList.add('bell-ring'); setTimeout(() => bell.classList.remove('bell-ring'), 1000); }
+                if (typeof Swal === 'undefined' || !Swal.isVisible()) {
+                    setTimeout(() => location.reload(), 1500);
+                }
             }
             cashierNotifCount = count;
+            cashierNotifInit  = true;
 
             // Update order counts in dashboard
             if (res.order_counts) {

@@ -147,7 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
       <div class="table-wrapper">
         <table class="table admin-table mb-0">
-          <thead><tr><th>#</th><th>No. Pesanan</th><th>Pelanggan</th><th>Total</th><th>Pembayaran</th><th>Status</th><th>Waktu</th></tr></thead>
+          <thead><tr><th>#</th><th>No. Pesanan</th><th>Pelanggan</th><th>Total</th><th>Pembayaran</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead>
           <tbody>
             <?php foreach ($recentOrders as $i => $o): ?>
             <tr>
@@ -155,13 +155,22 @@ require_once __DIR__ . '/../includes/header.php';
               <td><span class="fw-700" style="color:var(--primary)"><?= e($o['order_number']) ?></span></td>
               <td><?= e($o['customer_name']) ?></td>
               <td class="fw-700"><?= formatRupiah($o['total_amount']) ?></td>
-              <td><?= strtoupper(e($o['payment_method'])) ?></td>
+              <td><?= strtoupper(e($o['payment_method'])) ?> <?= paymentStatusBadge($o['payment_status']) ?></td>
               <td><?= orderStatusBadge($o['order_status']) ?></td>
               <td class="text-muted small"><?= formatDate($o['created_at'],'d M H:i') ?></td>
+              <td>
+                <?php if ($o['payment_status'] === 'pending'): ?>
+                <button class="btn btn-success btn-sm rounded-pill px-2 py-1" onclick="confirmPayment(<?= $o['id'] ?>)">
+                  <i class="fa-solid fa-check me-1"></i>Konfirmasi
+                </button>
+                <?php else: ?>
+                <span class="text-muted small">-</span>
+                <?php endif; ?>
+              </td>
             </tr>
             <?php endforeach; ?>
             <?php if (empty($recentOrders)): ?>
-            <tr><td colspan="7" class="text-center text-muted py-4">Belum ada pesanan</td></tr>
+            <tr><td colspan="8" class="text-center text-muted py-4">Belum ada pesanan</td></tr>
             <?php endif; ?>
           </tbody>
         </table>

@@ -111,10 +111,13 @@ require_once __DIR__ . '/../includes/header.php';
               <?php if ($o['table_number']): ?>
               <div class="order-table"><i class="fa-solid fa-chair me-1"></i>Meja <?= e($o['table_number']) ?></div>
               <?php endif; ?>
-              <div class="order-total"><?= formatRupiah($o['total_amount']) ?></div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div><?= paymentStatusBadge($o['payment_status']) ?></div>
+                <div class="order-total mb-0"><?= formatRupiah($o['total_amount']) ?></div>
+              </div>
             </div>
             <div class="order-card-footer flex-wrap gap-2">
-              <?php if ($o['payment_status']==='pending' && !empty($o['payment_proof'])): ?>
+              <?php if ($o['payment_status']==='pending'): ?>
               <button class="btn btn-success btn-sm rounded-pill flex-fill" onclick="confirmPayment(<?= $o['id'] ?>)">
                 <i class="fa-solid fa-check me-1"></i>Konfirmasi Bayar
               </button>

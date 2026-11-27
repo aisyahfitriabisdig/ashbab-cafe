@@ -96,7 +96,7 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
           <div class="order-card-footer flex-wrap">
             <!-- Payment actions -->
-            <?php if ($o['payment_status']==='pending' && !empty($o['payment_proof'])): ?>
+            <?php if ($o['payment_status']==='pending'): ?>
             <button class="btn btn-success btn-sm rounded-pill" onclick="confirmPayment(<?= $o['id'] ?>)">
               <i class="fa-solid fa-check me-1"></i>Konfirmasi Bayar
             </button>

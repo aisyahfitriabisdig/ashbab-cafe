@@ -23,6 +23,10 @@ if (!empty($_POST['payment_action'])) {
         if ($order['order_status'] === 'waiting') {
             db()->execute("UPDATE orders SET order_status='accepted' WHERE id=?", [$orderId]);
         }
+        db()->insert(
+            "INSERT INTO notifications (order_id, target, title, message) VALUES (?,?,?,?)",
+            [$orderId, 'customer', "Pembayaran Dikonfirmasi ✅", "Pembayaran QRIS untuk pesanan #{$order['order_number']} telah dikonfirmasi."]
+        );
         jsonResponse(['success'=>true,'message'=>'Pembayaran dikonfirmasi']);
     } elseif ($action === 'reject') {
         if ($order['order_status'] !== 'cancelled') {

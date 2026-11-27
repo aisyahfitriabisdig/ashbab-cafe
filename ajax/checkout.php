@@ -21,7 +21,50 @@ $paymentVerified= clean($_POST['payment_verified']?? '');
 if (!$customerName) { jsonResponse(['success'=>false,'message'=>'Nama pelanggan wajib diisi']); }
 if (!$phone)        { jsonResponse(['success'=>false,'message'=>'Nomor HP wajib diisi']); }
 if ($paymentMethod !== 'qris') { jsonResponse(['success'=>false,'message'=>'Metode pembayaran tidak valid']); }
-if ($paymentVerified !== '1')  { jsonResponse(['success'=>false,'message'=>'Selesaikan pembayaran terlebih dahulu']); }
+
+// Cek apakah pesanan sudah terverifikasi di database melalui real-time polling
+$pendingId = isset($_SESSION['pending_order_id']) ? (int)$_SESSION['pending_order_id'] : 0;
+if ($pendingId > 0) {
+    $existingOrder = db()->fetch("SELECT * FROM orders WHERE id=?", [$pendingId]);
+    if ($existingOrder) {
+        if ($existingOrder['payment_status'] !== 'confirmed') {
+            jsonResponse(['success'=>false,'message'=>'Pembayaran Anda belum dikonfirmasi. Mohon tunggu konfirmasi pembayaran QRIS.']);
+        }
+
+        db()->execute(
+            "UPDATE orders SET customer_name=?, phone=?, table_number=?, notes=? WHERE id=?",
+            [$customerName, $phone, $tableNumber ?: null, $notes ?: null, $pendingId]
+        );
+
+        db()->insert(
+            "INSERT INTO notifications (order_id,target,title,message) VALUES (?,?,?,?)",
+            [
+                $pendingId,
+                'admin',
+                "Pesanan Siap Diproses! 🔔",
+                "Pesanan #{$existingOrder['order_number']} dari {$customerName} (" . formatRupiah((float)$existingOrder['total_amount']) . ") telah selesai checkout."
+            ]
+        );
+
+        unset($_SESSION['cart'], $_SESSION['order_notes'], $_SESSION['pending_order_id']);
+
+        if (!isset($_SESSION['my_orders'])) {
+            $_SESSION['my_orders'] = [];
+        }
+        if (!in_array($existingOrder['order_number'], $_SESSION['my_orders'], true)) {
+            $_SESSION['my_orders'][] = $existingOrder['order_number'];
+        }
+
+        jsonResponse([
+            'success'      => true,
+            'message'      => 'Pesanan berhasil dibuat!',
+            'order_number' => $existingOrder['order_number'],
+            'order_id'     => (int)$existingOrder['id'],
+        ]);
+    }
+}
+
+jsonResponse(['success'=>false,'message'=>'Pembayaran belum terkonfirmasi di sistem. Mohon tunggu verifikasi pembayaran QRIS.']);
 
 $proofPath = null;
 
