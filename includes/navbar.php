@@ -17,7 +17,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <!-- Brand -->
         <a class="navbar-brand d-flex align-items-center gap-1 gap-md-2 me-1 me-md-3" href="<?= APP_URL ?>/">
             <?php if (!empty($settings['logo'])): ?>
-                <img src="<?= APP_URL . '/' . $settings['logo'] ?>" alt="Logo" style="width: 35px; height: 35px; object-fit: cover;" class="rounded-circle">
+                <img src="<?= e(assetUrl($settings['logo'])) ?>" alt="Logo" style="width: 35px; height: 35px; object-fit: cover;" class="rounded-circle">
             <?php else: ?>
                 <img src="<?= APP_URL ?>/assets/uploads/ashbab_logo.png" alt="Ashbab Logo" style="width: 35px; height: 35px; object-fit: cover;" class="rounded-circle">
             <?php endif; ?>

@@ -69,7 +69,7 @@ if ($format === 'pdf') {
 <div class="receipt-wrap" id="receipt">
   <div class="r-center">
     <?php if (!empty($settings['logo'])): ?>
-      <img src="<?= APP_URL . '/' . $settings['logo'] ?>" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:8px">
+      <img src="<?= e(assetUrl($settings['logo'])) ?>" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:8px">
     <?php else: ?>
       <div class="r-logo">☕</div>
     <?php endif; ?>

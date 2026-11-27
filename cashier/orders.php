@@ -123,7 +123,7 @@ require_once __DIR__ . '/../includes/header.php';
             <!-- View proof -->
             <?php if (!empty($o['payment_proof'])): ?>
             <button class="btn btn-outline-secondary btn-sm rounded-pill"
-              onclick="window.open('<?= APP_URL . '/' . $o['payment_proof'] ?>','_blank')">
+              onclick="window.open('<?= e(assetUrl($o['payment_proof'])) ?>','_blank')">
               <i class="fa-solid fa-image me-1"></i>Bukti
             </button>
             <?php endif; ?>

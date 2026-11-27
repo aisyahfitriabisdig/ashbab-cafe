@@ -31,7 +31,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="col-lg-6" data-aos="fade-right">
                 <div style="position: relative;">
                     <?php if (!empty($settings['about_image'])): ?>
-                        <img src="<?= APP_URL . '/' . e($settings['about_image']) ?>" alt="Tentang Kami" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 500px; object-fit: cover;">
+                        <img src="<?= e(assetUrl($settings['about_image'])) ?>" alt="Tentang Kami" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 500px; object-fit: cover;">
                     <?php else: ?>
                         <img src="<?= APP_URL ?>/assets/uploads/ashbab_logo.png" alt="Ashbab Cafe" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 500px; object-fit: contain; background: var(--dark); padding: 40px;">
                     <?php endif; ?>

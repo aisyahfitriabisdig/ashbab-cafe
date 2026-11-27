@@ -27,7 +27,7 @@ function sideLink(string $href, string $icon, string $label, string $current, st
     <div class="sidebar-brand">
         <div class="d-flex align-items-center gap-2">
             <?php if (!empty($settings['logo'])): ?>
-                <img src="<?= APP_URL ?>/<?= e($settings['logo']) ?>" alt="Logo" style="width: 40px; height: 40px; object-fit: cover;" class="rounded-circle">
+                <img src="<?= e(assetUrl($settings['logo'])) ?>" alt="Logo" style="width: 40px; height: 40px; object-fit: cover;" class="rounded-circle">
             <?php else: ?>
                 <img src="<?= APP_URL ?>/assets/uploads/ashbab_logo.png" alt="Ashbab Logo" style="width: 40px; height: 40px; object-fit: cover;" class="rounded-circle">
             <?php endif; ?>

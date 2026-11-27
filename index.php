@@ -35,7 +35,7 @@ require_once __DIR__ . '/includes/header.php';
 <div id="pageLoader">
     <div class="text-center">
         <?php if (!empty($settings['logo'])): ?>
-            <img src="<?= APP_URL ?>/<?= e($settings['logo']) ?>" alt="Logo" class="loader-logo">
+            <img src="<?= e(assetUrl($settings['logo'])) ?>" alt="Logo" class="loader-logo">
         <?php else: ?>
             <img src="<?= APP_URL ?>/assets/uploads/ashbab_logo.png" alt="Logo" class="loader-logo">
         <?php endif; ?>
@@ -109,7 +109,7 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="carousel-inner rounded-4 shadow">
                             <?php foreach ($banners as $idx => $b): ?>
                                 <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                    <img src="<?= APP_URL . '/' . e($b) ?>" class="d-block w-100" alt="Banner <?= $idx+1 ?>" style="height:460px;object-fit:cover">
+                                    <img src="<?= e(assetUrl($b)) ?>" class="d-block w-100" alt="Banner <?= $idx+1 ?>" style="height:460px;object-fit:cover">
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -123,7 +123,7 @@ require_once __DIR__ . '/includes/header.php';
                         </button>
                     </div>
                 <?php elseif (count($banners) === 1): ?>
-                    <img src="<?= APP_URL . '/' . e($banners[0]) ?>" alt="Banner" class="img-fluid rounded-4 shadow" style="height:460px;width:100%;object-fit:cover">
+                    <img src="<?= e(assetUrl($banners[0])) ?>" alt="Banner" class="img-fluid rounded-4 shadow" style="height:460px;width:100%;object-fit:cover">
                 <?php else: ?>
                     <div class="hero-image-placeholder">☕</div>
                 <?php endif; ?>
@@ -154,8 +154,8 @@ require_once __DIR__ . '/includes/header.php';
             <?php foreach ($bestSellers as $menu): ?>
             <div class="col-6 col-md-4 col-lg-3" data-aos="fade-up" data-aos-delay="<?= $loop_i++ * 100 ?? 0 ?>">
                 <div class="menu-card position-relative">
-                    <?php if ($menu['image'] && file_exists(ROOT_PATH . $menu['image'])): ?>
-                        <img src="<?= APP_URL . '/' . e($menu['image']) ?>" alt="<?= e($menu['name']) ?>" class="menu-card-img">
+                    <?php if (assetExists($menu['image'])): ?>
+                        <img src="<?= e(assetUrl($menu['image'])) ?>" alt="<?= e($menu['name']) ?>" class="menu-card-img">
                     <?php else: ?>
                         <div class="menu-card-img-placeholder">🍽️</div>
                     <?php endif; ?>
@@ -259,7 +259,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="row align-items-center g-5">
             <div class="col-lg-5 text-center" data-aos="zoom-in">
                 <?php if (!empty($settings['about_image'])): ?>
-                    <img src="<?= APP_URL . '/' . e($settings['about_image']) ?>" alt="Tentang Kami" class="img-fluid rounded-4 shadow-lg mb-4" style="max-height: 350px; object-fit: cover;">
+                    <img src="<?= e(assetUrl($settings['about_image'])) ?>" alt="Tentang Kami" class="img-fluid rounded-4 shadow-lg mb-4" style="max-height: 350px; object-fit: cover;">
                 <?php else: ?>
                     <div style="font-size:10rem;line-height:1">☕</div>
                 <?php endif; ?>

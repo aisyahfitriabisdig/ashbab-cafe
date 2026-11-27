@@ -23,19 +23,26 @@ if (!$cafeName) { jsonResponse(['success'=>false,'message'=>'Nama cafe wajib dii
 $current = db()->fetch("SELECT * FROM settings LIMIT 1");
 
 // Handle file uploads
-$fields = ['logo','favicon','qris_image','about_image'];
-$paths  = [];
-foreach ($fields as $field) {
+$fields = [
+    'logo'        => 'Logo',
+    'favicon'     => 'Favicon',
+    'qris_image'  => 'QRIS',
+    'about_image' => 'Gambar Tentang Kami',
+];
+$faviconTypes = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/x-png', 'image/webp', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'];
+$paths = [];
+foreach ($fields as $field => $label) {
     if (!empty($_FILES[$field]['name']) && !is_array($_FILES[$field]['name'])) {
         $folder = $field === 'qris_image' ? 'payments' : $field;
-        $path   = uploadFile($_FILES[$field], $folder);
-        if ($path) {
-            $paths[$field] = $path;
-            // Delete old file
-            if (!empty($current[$field]) && file_exists(ROOT_PATH . $current[$field])) {
-                @unlink(ROOT_PATH . $current[$field]);
-            }
+        $path   = $field === 'favicon'
+            ? uploadFile($_FILES[$field], $folder, $faviconTypes)
+            : uploadFile($_FILES[$field], $folder);
+        if (!$path) {
+            $err = getLastUploadError() ?: 'Periksa format dan ukuran file.';
+            jsonResponse(['success' => false, 'message' => "Gagal mengunggah {$label}: {$err}"]);
         }
+        $paths[$field] = $path;
+        deleteUploadedFile($current[$field] ?? null);
     }
 }
 
@@ -53,7 +60,7 @@ if (!empty($current['banner'])) {
 if (!empty($_FILES['banner']['name']) && is_array($_FILES['banner']['name'])) {
     $count = count($_FILES['banner']['name']);
     for ($i = 0; $i < $count; $i++) {
-        if ($_FILES['banner']['error'][$i] === UPLOAD_ERR_OK) {
+        if (($_FILES['banner']['name'][$i] ?? '') !== '') {
             $fileArray = [
                 'name'     => $_FILES['banner']['name'][$i],
                 'type'     => $_FILES['banner']['type'][$i],
@@ -62,9 +69,11 @@ if (!empty($_FILES['banner']['name']) && is_array($_FILES['banner']['name'])) {
                 'size'     => $_FILES['banner']['size'][$i]
             ];
             $path = uploadFile($fileArray, 'banner');
-            if ($path) {
-                $bannerPaths[] = $path;
+            if (!$path) {
+                $err = getLastUploadError() ?: 'Periksa format dan ukuran file.';
+                jsonResponse(['success' => false, 'message' => "Gagal mengunggah Banner: {$err}"]);
             }
+            $bannerPaths[] = $path;
         }
     }
 }
@@ -88,4 +97,8 @@ if ($current) {
     );
 }
 
-jsonResponse(['success'=>true,'message'=>'Pengaturan berhasil disimpan!']);
+jsonResponse([
+    'success'  => true,
+    'message'  => 'Pengaturan berhasil disimpan!',
+    'qris_url' => assetUrl($qrisPath),
+]);

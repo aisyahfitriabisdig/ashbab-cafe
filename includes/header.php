@@ -20,7 +20,7 @@ $pageTitle = isset($pageTitle) ? e($pageTitle) . ' | ' . $cafeName : $cafeName;
 
     <!-- Favicon -->
     <?php if (!empty($settings['favicon'])): ?>
-    <link rel="icon" type="image/png" href="<?= APP_URL . '/' . $settings['favicon'] ?>">
+    <link rel="icon" type="image/png" href="<?= e(assetUrl($settings['favicon'])) ?>">
     <?php else: ?>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
     <?php endif; ?>

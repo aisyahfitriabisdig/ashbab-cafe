@@ -67,7 +67,7 @@ $cafeName = $settings['cafe_name'] ?? 'ASHBAB CAFE';
 <div class="login-card">
     <div class="text-center">
         <?php if (!empty($settings['logo'])): ?>
-            <img src="<?= APP_URL . '/' . $settings['logo'] ?>" alt="Logo" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin-bottom:12px">
+            <img src="<?= e(assetUrl($settings['logo'])) ?>" alt="Logo" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin-bottom:12px">
         <?php else: ?>
             <div class="login-logo">☕</div>
         <?php endif; ?>

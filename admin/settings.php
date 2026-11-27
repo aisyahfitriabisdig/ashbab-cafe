@@ -81,12 +81,10 @@ require_once __DIR__ . '/../includes/header.php';
                 <label class="admin-form-label">Upload QRIS Image</label>
                 <input type="file" class="admin-input" name="qris_image" id="qrisInput" accept="image/*">
               </div>
-              <?php if (!empty($settings['qris_image'])): ?>
-              <div class="col-md-6 text-center">
+              <div class="col-md-6 text-center" id="qrisPreviewWrap" style="<?= empty($settings['qris_image']) ? 'display:none' : '' ?>">
                 <label class="admin-form-label">QRIS Saat Ini</label><br>
-                <img src="<?= APP_URL . '/' . $settings['qris_image'] ?>" style="max-width:160px;border-radius:12px">
+                <img id="qrisPreviewImg" src="<?= e(assetUrl($settings['qris_image'] ?? '')) ?>" alt="QRIS" style="max-width:160px;border-radius:12px">
               </div>
-              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -103,7 +101,7 @@ require_once __DIR__ . '/../includes/header.php';
               <label class="admin-form-label">Logo Cafe</label>
               <?php if (!empty($settings['logo'])): ?>
               <div class="text-center mb-2">
-                <img src="<?= APP_URL . '/' . $settings['logo'] ?>" style="width:80px;height:80px;border-radius:50%;object-fit:cover">
+                <img src="<?= e(assetUrl($settings['logo'])) ?>" style="width:80px;height:80px;border-radius:50%;object-fit:cover">
               </div>
               <?php endif; ?>
               <input type="file" class="admin-input" name="logo" accept="image/*">
@@ -120,7 +118,7 @@ require_once __DIR__ . '/../includes/header.php';
               <label class="admin-form-label">Gambar Tentang Kami</label>
               <?php if (!empty($settings['about_image'])): ?>
               <div class="mb-2">
-                <img src="<?= APP_URL . '/' . $settings['about_image'] ?>" style="width:100%;border-radius:10px;height:120px;object-fit:cover">
+                <img src="<?= e(assetUrl($settings['about_image'])) ?>" style="width:100%;border-radius:10px;height:120px;object-fit:cover">
               </div>
               <?php endif; ?>
               <input type="file" class="admin-input" name="about_image" accept="image/*">
@@ -139,7 +137,7 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="row g-2 mb-3">
                 <?php foreach($banners as $index => $b): ?>
                 <div class="col-6 position-relative" id="banner-<?= $index ?>">
-                  <img src="<?= APP_URL . '/' . $b ?>" style="width:100%;border-radius:10px;height:80px;object-fit:cover">
+                  <img src="<?= e(assetUrl($b)) ?>" style="width:100%;border-radius:10px;height:80px;object-fit:cover">
                   <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 p-1" onclick="deleteBanner('<?= e($b) ?>', <?= $index ?>)" title="Hapus">
                       <i class="fa-solid fa-xmark"></i>
                   </button>
@@ -168,19 +166,49 @@ require_once __DIR__ . '/../includes/header.php';
 const APP_URL    = '<?= APP_URL ?>';
 const CSRF_TOKEN = '<?= generateCSRF() ?>';
 
+document.getElementById('qrisInput')?.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('qrisPreviewImg');
+    const wrap = document.getElementById('qrisPreviewWrap');
+    if (img && wrap) {
+      img.src = e.target.result;
+      wrap.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
 document.getElementById('settingsForm').addEventListener('submit', function(e) {
   e.preventDefault();
   const btn = this.querySelector('button[type=submit]');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
   fetch(APP_URL + '/ajax/settings.php', { method:'POST', body: new FormData(this) })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(res => {
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Simpan Pengaturan';
       if (res.success) {
+        if (res.qris_url) {
+          const img = document.getElementById('qrisPreviewImg');
+          const wrap = document.getElementById('qrisPreviewWrap');
+          if (img && wrap) {
+            img.src = res.qris_url;
+            wrap.style.display = 'block';
+          }
+        }
         alertSuccess(res.message || 'Pengaturan disimpan!');
         setTimeout(() => window.location.reload(), 1500);
       }
       else alertError(res.message || 'Gagal menyimpan.');
+    })
+    .catch(() => {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Simpan Pengaturan';
+      alertError('Terjadi kesalahan saat menyimpan pengaturan. Silakan coba lagi.');
     });
 });
 

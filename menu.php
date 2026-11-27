@@ -64,8 +64,8 @@ require_once __DIR__ . '/includes/header.php';
         <?php foreach ($menus as $i => $menu): ?>
         <div class="col-6 col-md-4 col-xl-3" data-aos="fade-up" data-aos-delay="<?= ($i % 8) * 60 ?>">
             <div class="menu-card h-100 position-relative">
-                <?php if ($menu['image'] && file_exists(ROOT_PATH . $menu['image'])): ?>
-                    <img src="<?= APP_URL . '/' . e($menu['image']) ?>" alt="<?= e($menu['name']) ?>" class="menu-card-img">
+                <?php if (assetExists($menu['image'])): ?>
+                    <img src="<?= e(assetUrl($menu['image'])) ?>" alt="<?= e($menu['name']) ?>" class="menu-card-img">
                 <?php else: ?>
                     <div class="menu-card-img-placeholder">🍽️</div>
                 <?php endif; ?>
@@ -129,8 +129,11 @@ require_once __DIR__ . '/includes/header.php';
             .then(res => {
                 if (!res.success) { content.innerHTML = '<p class="p-4 text-center text-muted">Menu tidak ditemukan.</p>'; return; }
                 const m = res.menu;
-                const imgHtml = m.image
-                    ? `<img src="${APP_URL}/${m.image}" class="w-100" style="height:240px;object-fit:cover" alt="${m.name}">`
+                const imgSrc = m.image
+                    ? (/^(https?:\/\/|data:)/i.test(m.image) ? m.image : `${APP_URL}/${m.image.replace(/^\/+/, '')}`)
+                    : '';
+                const imgHtml = imgSrc
+                    ? `<img src="${imgSrc}" class="w-100" style="height:240px;object-fit:cover" alt="${m.name}">`
                     : `<div style="height:200px;background:linear-gradient(135deg,var(--accent),#e8d5b0);display:flex;align-items:center;justify-content:center;font-size:5rem">🍽️</div>`;
                 content.innerHTML = `
                     <div class="rounded-4 overflow-hidden">

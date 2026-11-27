@@ -28,9 +28,7 @@ $found = false;
 foreach ($bannerPaths as $path) {
     if ($path === $pathToDelete) {
         $found = true;
-        if (file_exists(ROOT_PATH . $path)) {
-            @unlink(ROOT_PATH . $path);
-        }
+        deleteUploadedFile($path);
     } else {
         $newPaths[] = $path;
     }

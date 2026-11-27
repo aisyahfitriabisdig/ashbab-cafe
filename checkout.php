@@ -94,7 +94,7 @@ require_once __DIR__ . '/includes/header.php';
                     <div id="qrisInfo" class="mt-4 text-center" style="display:block">
                         <h6 class="fw-700 mb-3"><i class="fa-solid fa-qrcode me-2" style="color:var(--primary)"></i>Scan QRIS</h6>
                         <?php if (!empty($settings['qris_image'])): ?>
-                            <img src="<?= APP_URL . '/' . $settings['qris_image'] ?>" alt="QRIS" style="max-width:220px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
+                            <img src="<?= e(assetUrl($settings['qris_image'])) ?>" alt="QRIS" style="max-width:220px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
                         <?php else: ?>
                             <div class="p-4 rounded-3" style="background:#f8fafc;border:2px dashed #e2e8f0">
                                 <i class="fa-solid fa-qrcode fa-3x text-muted"></i>

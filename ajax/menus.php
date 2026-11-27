@@ -27,6 +27,10 @@ switch ($action) {
         $imagePath = null;
         if (!empty($_FILES['image']['name'])) {
             $imagePath = uploadFile($_FILES['image'], 'menu');
+            if (!$imagePath) {
+                $err = getLastUploadError() ?: 'Format/ukuran file tidak valid.';
+                jsonResponse(['success'=>false,'message'=>"Gagal mengunggah foto menu: {$err}"]);
+            }
         }
         db()->insert(
             "INSERT INTO menus (category_id,name,description,price,stock,image,status) VALUES (?,?,?,?,?,?,?)",
@@ -41,8 +45,16 @@ switch ($action) {
         $imagePath = null;
         if (!empty($_FILES['image']['name'])) {
             $imagePath = uploadFile($_FILES['image'], 'menu');
+            if (!$imagePath) {
+                $err = getLastUploadError() ?: 'Format/ukuran file tidak valid.';
+                jsonResponse(['success'=>false,'message'=>"Gagal mengunggah foto menu: {$err}"]);
+            }
         }
         if ($imagePath) {
+            $existingMenu = db()->fetch("SELECT image FROM menus WHERE id=?", [$id]);
+            if ($existingMenu && !empty($existingMenu['image'])) {
+                deleteUploadedFile($existingMenu['image']);
+            }
             db()->execute(
                 "UPDATE menus SET category_id=?,name=?,description=?,price=?,stock=?,image=?,status=? WHERE id=?",
                 [$categoryId,$name,$description,$price,$stock,$imagePath,$status,$id]
@@ -58,8 +70,8 @@ switch ($action) {
     case 'delete':
         if (!$id) { jsonResponse(['success'=>false,'message'=>'ID tidak valid']); }
         $menu = db()->fetch("SELECT * FROM menus WHERE id=?",[$id]);
-        if ($menu && $menu['image'] && file_exists(ROOT_PATH . $menu['image'])) {
-            unlink(ROOT_PATH . $menu['image']);
+        if ($menu && !empty($menu['image'])) {
+            deleteUploadedFile($menu['image']);
         }
         db()->execute("DELETE FROM menus WHERE id=?", [$id]);
         jsonResponse(['success'=>true,'message'=>'Menu berhasil dihapus']);

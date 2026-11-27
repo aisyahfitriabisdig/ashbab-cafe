@@ -66,8 +66,8 @@ require_once __DIR__ . '/includes/header.php';
             <?php foreach ($cartItems as $item): ?>
             <div class="cart-item" data-id="<?= $item['menu']['id'] ?>">
                 <!-- Image -->
-                <?php if ($item['menu']['image'] && file_exists(ROOT_PATH . $item['menu']['image'])): ?>
-                    <img src="<?= APP_URL . '/' . e($item['menu']['image']) ?>" alt="<?= e($item['menu']['name']) ?>" class="cart-item-img" style="width:80px;height:80px;object-fit:cover;border-radius:10px;flex-shrink:0">
+                <?php if (assetExists($item['menu']['image'])): ?>
+                    <img src="<?= e(assetUrl($item['menu']['image'])) ?>" alt="<?= e($item['menu']['name']) ?>" class="cart-item-img" style="width:80px;height:80px;object-fit:cover;border-radius:10px;flex-shrink:0">
                 <?php else: ?>
                     <div class="cart-item-img">🍽️</div>
                 <?php endif; ?>

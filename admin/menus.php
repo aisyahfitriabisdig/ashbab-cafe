@@ -54,8 +54,8 @@ require_once __DIR__ . '/../includes/header.php';
             <tr data-menu-id="<?= $m['id'] ?>">
               <td><?= $i+1 ?></td>
               <td>
-                <?php if ($m['image'] && file_exists(ROOT_PATH . $m['image'])): ?>
-                  <img src="<?= APP_URL . '/' . e($m['image']) ?>" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
+                <?php if (assetExists($m['image'])): ?>
+                  <img src="<?= e(assetUrl($m['image'])) ?>" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
                 <?php else: ?>
                   <div style="width:52px;height:52px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem">🍽️</div>
                 <?php endif; ?>
@@ -180,7 +180,8 @@ function openEditMenu(menu) {
   document.getElementById('menuDesc').value    = menu.description || '';
   document.getElementById('menuStatus').value  = menu.status;
   if (menu.image) {
-    document.getElementById('imagePreview').src = APP_URL + '/' + menu.image;
+    const imgSrc = /^(https?:\/\/|data:)/i.test(menu.image) ? menu.image : `${APP_URL}/${menu.image.replace(/^\/+/, '')}`;
+    document.getElementById('imagePreview').src = imgSrc;
     document.getElementById('imagePreviewWrap').style.display = 'block';
   } else {
     document.getElementById('imagePreviewWrap').style.display = 'none';

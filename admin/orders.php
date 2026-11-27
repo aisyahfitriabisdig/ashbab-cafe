@@ -134,10 +134,13 @@ function viewOrder(id) {
          <td class="text-end fw-700">Rp ${Number(it.subtotal).toLocaleString('id-ID')}</td></tr>`
       ).join('');
 
-      const proofHtml = o.payment_proof
+      const proofSrc = o.payment_proof
+        ? (/^(https?:\/\/|data:)/i.test(o.payment_proof) ? o.payment_proof : `${APP_URL}/${o.payment_proof.replace(/^\/+/, '')}`)
+        : '';
+      const proofHtml = proofSrc
         ? `<div class="mt-3"><label class="admin-form-label">Bukti Pembayaran</label><br>
-           <img src="${APP_URL}/${o.payment_proof}" style="max-width:200px;border-radius:12px;cursor:pointer"
-                onclick="window.open('${APP_URL}/${o.payment_proof}','_blank')"></div>` : '';
+           <img src="${proofSrc}" style="max-width:200px;border-radius:12px;cursor:pointer"
+                onclick="window.open('${proofSrc}','_blank')"></div>` : '';
 
       content.innerHTML = `
         <div class="row g-3 mb-3">

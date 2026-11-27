@@ -16,6 +16,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_last_activity ON sessions (last_activity);
 
 -- ============================================================
+-- Table: uploaded_files (fallback media storage untuk Vercel)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS uploaded_files (
+  id VARCHAR(191) PRIMARY KEY,
+  mime_type VARCHAR(100) NOT NULL,
+  data TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
 -- Table: users
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
