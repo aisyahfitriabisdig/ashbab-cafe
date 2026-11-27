@@ -71,11 +71,11 @@ require_once __DIR__ . '/../includes/header.php';
                 </button>
               </td>
               <td>
-                <button class="action-btn edit me-1" title="Edit"
-                  onclick="openEditMenu(<?= htmlspecialchars(json_encode($m)) ?>)">
+                <button type="button" class="action-btn edit me-1" title="Edit"
+                  onclick="openEditMenu(<?= htmlspecialchars(json_encode($m, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>)">
                   <i class="fa-solid fa-pen"></i>
                 </button>
-                <button class="action-btn delete" title="Hapus" onclick="deleteMenu(<?= $m['id'] ?>)">
+                <button type="button" class="action-btn delete" title="Hapus" onclick="deleteMenu(<?= $m['id'] ?>)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </td>
@@ -119,11 +119,11 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="col-md-6">
               <label class="admin-form-label">Harga (Rp) <span class="text-danger">*</span></label>
-              <input type="number" class="admin-input" name="price" id="menuPrice" required min="0" placeholder="0">
+              <input type="number" class="admin-input" name="price" id="menuPrice" required min="0" step="any" placeholder="0">
             </div>
             <div class="col-md-6">
               <label class="admin-form-label">Stok <span class="text-danger">*</span></label>
-              <input type="number" class="admin-input" name="stock" id="menuStock" required min="0" placeholder="0">
+              <input type="number" class="admin-input" name="stock" id="menuStock" required min="0" step="1" placeholder="0">
             </div>
             <div class="col-12">
               <label class="admin-form-label">Deskripsi</label>
@@ -139,6 +139,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="col-md-6">
               <label class="admin-form-label">Foto Menu</label>
               <input type="file" class="admin-input" name="image" id="menuImage" accept="image/*">
+              <small class="text-muted d-block mt-1" id="menuImageHint" style="display:none;font-size:.75rem">Kosongkan jika tidak ingin mengubah foto saat ini.</small>
             </div>
             <div class="col-12 text-center" id="imagePreviewWrap" style="display:none">
               <img id="imagePreview" src="" alt="Preview" style="max-height:160px;border-radius:12px;object-fit:cover">
@@ -163,30 +164,42 @@ const CSRF_TOKEN = '<?= generateCSRF() ?>';
 
 function resetMenuForm() {
   document.getElementById('menuModalTitle').textContent = 'Tambah Menu';
+  document.getElementById('menuForm').reset();
   document.getElementById('menuAction').value = 'add';
   document.getElementById('menuId').value = '';
-  document.getElementById('menuForm').reset();
+  document.getElementById('menuImage').value = '';
+  document.getElementById('imagePreview').src = '';
   document.getElementById('imagePreviewWrap').style.display = 'none';
+  const hint = document.getElementById('menuImageHint');
+  if (hint) hint.style.display = 'none';
 }
 
 function openEditMenu(menu) {
+  document.getElementById('menuForm').reset();
+  document.getElementById('menuImage').value = '';
   document.getElementById('menuModalTitle').textContent = 'Edit Menu';
-  document.getElementById('menuAction').value  = 'edit';
-  document.getElementById('menuId').value      = menu.id;
-  document.getElementById('menuName').value    = menu.name;
-  document.getElementById('menuCategory').value= menu.category_id;
-  document.getElementById('menuPrice').value   = menu.price;
-  document.getElementById('menuStock').value   = menu.stock;
-  document.getElementById('menuDesc').value    = menu.description || '';
-  document.getElementById('menuStatus').value  = menu.status;
+  document.getElementById('menuAction').value   = 'edit';
+  document.getElementById('menuId').value       = menu.id;
+  document.getElementById('menuName').value     = menu.name || '';
+  document.getElementById('menuCategory').value = String(menu.category_id || '');
+  const priceNum = Number(menu.price);
+  document.getElementById('menuPrice').value    = Number.isFinite(priceNum) ? priceNum : (menu.price || 0);
+  document.getElementById('menuStock').value    = menu.stock ?? 0;
+  document.getElementById('menuDesc').value     = menu.description || '';
+  document.getElementById('menuStatus').value   = menu.status || 'available';
+
+  const hint = document.getElementById('menuImageHint');
+  if (hint) hint.style.display = 'block';
+
   if (menu.image) {
     const imgSrc = /^(https?:\/\/|data:)/i.test(menu.image) ? menu.image : `${APP_URL}/${menu.image.replace(/^\/+/, '')}`;
     document.getElementById('imagePreview').src = imgSrc;
     document.getElementById('imagePreviewWrap').style.display = 'block';
   } else {
+    document.getElementById('imagePreview').src = '';
     document.getElementById('imagePreviewWrap').style.display = 'none';
   }
-  new bootstrap.Modal(document.getElementById('menuModal')).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('menuModal')).show();
 }
 
 // Image preview
@@ -208,14 +221,23 @@ document.getElementById('menuForm').addEventListener('submit', function(e) {
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
 
   fetch(APP_URL + '/ajax/menus.php', { method:'POST', body: new FormData(this) })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(res => {
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Simpan Menu';
       if (res.success) {
-        bootstrap.Modal.getInstance(document.getElementById('menuModal'))?.hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('menuModal')).hide();
         alertSuccess(res.message || 'Menu disimpan!');
-        setTimeout(() => location.reload(), 1200);
-      } else alertError(res.message || 'Gagal menyimpan menu.');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alertError(res.message || 'Gagal menyimpan menu.');
+      }
+    })
+    .catch(() => {
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Simpan Menu';
+      alertError('Terjadi kesalahan jaringan/server saat menyimpan menu. Silakan coba lagi.');
     });
 });
 

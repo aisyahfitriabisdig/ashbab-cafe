@@ -76,6 +76,24 @@ function normalizeImageMime(string $mime): string {
     return $map[$mime] ?? $mime;
 }
 
+function ensureSupabaseBucketPublic(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+
+    if (DB_DRIVER === 'pgsql' && SUPABASE_BUCKET !== '') {
+        try {
+            db()->execute(
+                "INSERT INTO storage.buckets (id, name, public) VALUES (?, ?, true)
+                 ON CONFLICT (id) DO UPDATE SET public = true",
+                [SUPABASE_BUCKET, SUPABASE_BUCKET]
+            );
+        } catch (Throwable $e) {
+            // Ignore if storage schema is not accessible by current DB role
+        }
+    }
+}
+
 function ensureUploadedFilesTable(): void {
     static $ensured = false;
     if ($ensured) return;
@@ -211,6 +229,7 @@ function uploadFile(
 
     // Tier 1: Upload ke Supabase Storage jika konfigurasi tersedia
     if (SUPABASE_URL !== '' && SUPABASE_KEY !== '') {
+        ensureSupabaseBucketPublic();
         $objectPath = $folder . '/' . $filename;
         $endpoint   = SUPABASE_URL . '/storage/v1/object/' . SUPABASE_BUCKET . '/' . $objectPath;
         $content    = @file_get_contents($tmpName);
