@@ -111,9 +111,7 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <!-- Footer -->
-<footer class="site-footer">
-    <p class="mb-0"><?= e($settings['footer_text'] ?? '© '.date('Y').' '.e($settings['cafe_name'] ?? 'ASHBAB CAFE')) ?></p>
-</footer>
+<?= renderSiteFooter() ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 <script>

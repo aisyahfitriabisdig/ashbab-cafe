@@ -486,6 +486,111 @@ document.addEventListener("DOMContentLoaded", function() {
     return $html;
 }
 
+function renderSiteFooter(): string {
+    $settings   = getSettings();
+    $cafeName   = e($settings['cafe_name'] ?? 'ASHBAB CAFE');
+    $address    = e($settings['address'] ?? 'Jl. Contoh No. 123, Indonesia');
+    $phone      = e($settings['phone'] ?? '08123456789');
+    $email      = e($settings['email'] ?? 'ashbabcafe@email.com');
+    $footerText = e($settings['footer_text'] ?? ('© ' . date('Y') . ' ' . ($settings['cafe_name'] ?? 'ASHBAB CAFE') . '. All Rights Reserved.'));
+    $logoUrl    = !empty($settings['logo']) ? e(assetUrl($settings['logo'])) : (APP_URL . '/assets/uploads/ashbab_logo.png');
+    $appUrl     = APP_URL;
+
+    return <<<HTML
+<footer class="site-footer">
+    <div class="site-footer-glow" aria-hidden="true"></div>
+    <div class="container position-relative" style="z-index:2">
+        <div class="row g-4 pb-4">
+            <!-- Brand Info -->
+            <div class="col-lg-4 col-md-6">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="{$logoUrl}" alt="{$cafeName}" class="footer-brand-logo">
+                    <div>
+                        <h5 class="footer-brand-title mb-0">{$cafeName}</h5>
+                        <span class="footer-brand-tag">Coffee &amp; Eatery</span>
+                    </div>
+                </div>
+                <p class="footer-desc mb-3">
+                    Tempat terbaik menikmati kopi pilihan dan hidangan berkualitas dengan suasana nyaman serta layanan pemesanan digital langsung dari meja Anda.
+                </p>
+                <div class="footer-socials d-flex align-items-center gap-2">
+                    <a href="https://www.instagram.com/ashbab.coffee" target="_blank" rel="noopener" class="footer-social-btn" title="Instagram @ashbab.coffee">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="tel:{$phone}" class="footer-social-btn" title="Telepon">
+                        <i class="fa-solid fa-phone"></i>
+                    </a>
+                    <a href="mailto:{$email}" class="footer-social-btn" title="Email">
+                        <i class="fa-solid fa-envelope"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6 col-6">
+                <h6 class="footer-heading">Navigasi</h6>
+                <ul class="footer-links list-unstyled mb-0">
+                    <li><a href="{$appUrl}/"><i class="fa-solid fa-chevron-right"></i>Beranda</a></li>
+                    <li><a href="{$appUrl}/menu.php"><i class="fa-solid fa-chevron-right"></i>Menu Kami</a></li>
+                    <li><a href="{$appUrl}/tracking.php"><i class="fa-solid fa-chevron-right"></i>Lacak Pesanan</a></li>
+                    <li><a href="{$appUrl}/about.php"><i class="fa-solid fa-chevron-right"></i>Tentang Kami</a></li>
+                    <li><a href="{$appUrl}/cart.php"><i class="fa-solid fa-chevron-right"></i>Keranjang</a></li>
+                </ul>
+            </div>
+
+            <!-- Opening Hours -->
+            <div class="col-lg-3 col-md-6 col-6">
+                <h6 class="footer-heading">Jam Operasional</h6>
+                <ul class="footer-hours list-unstyled mb-3">
+                    <li class="d-flex justify-content-between">
+                        <span>Senin – Jumat</span>
+                        <strong class="text-white">08.00 – 22.00</strong>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span>Sabtu – Minggu</span>
+                        <strong class="text-white">08.00 – 23.00</strong>
+                    </li>
+                </ul>
+                <div class="footer-open-badge">
+                    <span class="footer-open-dot"></span> Buka Setiap Hari
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="footer-heading">Kontak &amp; Lokasi</h6>
+                <ul class="footer-contact list-unstyled mb-0">
+                    <li>
+                        <span class="footer-contact-icon"><i class="fa-solid fa-location-dot"></i></span>
+                        <span>{$address}</span>
+                    </li>
+                    <li>
+                        <span class="footer-contact-icon"><i class="fa-solid fa-phone"></i></span>
+                        <a href="tel:{$phone}">{$phone}</a>
+                    </li>
+                    <li>
+                        <span class="footer-contact-icon"><i class="fa-solid fa-envelope"></i></span>
+                        <a href="mailto:{$email}">{$email}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="site-footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 pt-3">
+            <p class="mb-0 footer-copy">{$footerText}</p>
+            <div class="d-flex align-items-center gap-3">
+                <span class="footer-payment-pill"><i class="fa-solid fa-qrcode me-1" style="color:var(--primary)"></i>QRIS Digital Ready</span>
+                <a href="#" class="footer-top-btn" title="Kembali ke atas" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+HTML;
+}
+
 // ============================================================
 // Status Badges
 // ============================================================

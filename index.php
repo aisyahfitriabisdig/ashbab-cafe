@@ -426,9 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </section>
 
 <!-- Footer -->
-<footer class="site-footer">
-    <p class="mb-0"><?= e($settings['footer_text'] ?? '© ' . date('Y') . ' ' . $cafeName . '. All Rights Reserved.') ?></p>
-</footer>
+<?= renderSiteFooter() ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 <script>
