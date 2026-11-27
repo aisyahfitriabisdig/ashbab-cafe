@@ -9,6 +9,89 @@ $pageTitle = 'Checkout';
 $settings  = getSettings();
 $taxPct    = (float)($settings['tax_percent'] ?? 10);
 
+// Direct QRIS image download handler
+if (isset($_GET['download_qris']) && !empty($settings['qris_image'])) {
+    $qrisPath = trim((string)$settings['qris_image']);
+    $bytes    = false;
+    $mime     = 'image/png';
+
+    if (str_starts_with($qrisPath, 'media.php')) {
+        parse_str((string)(parse_url($qrisPath, PHP_URL_QUERY) ?? ''), $q);
+        $mediaId = $q['id'] ?? '';
+        if (is_string($mediaId) && preg_match('/^[a-zA-Z0-9_.-]+$/', $mediaId)) {
+            try {
+                $row = db()->fetch("SELECT mime_type, data FROM uploaded_files WHERE id = ? LIMIT 1", [$mediaId]);
+                if ($row && !empty($row['data'])) {
+                    $bytes = base64_decode($row['data'], true);
+                    $mime  = normalizeImageMime((string)($row['mime_type'] ?? 'image/png'));
+                }
+            } catch (Throwable $e) {
+                $bytes = false;
+            }
+        }
+    } elseif (str_starts_with($qrisPath, 'http://') || str_starts_with($qrisPath, 'https://')) {
+        if (function_exists('curl_init')) {
+            $ch = curl_init($qrisPath);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT        => 15,
+            ]);
+            $res = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $ct   = (string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            curl_close($ch);
+            if ($res !== false && $code >= 200 && $code < 300) {
+                $bytes = $res;
+                if ($ct !== '') {
+                    $mime = normalizeImageMime($ct);
+                }
+            }
+        } else {
+            $bytes = @file_get_contents($qrisPath);
+        }
+    } else {
+        $localFile = ROOT_PATH . ltrim($qrisPath, '/');
+        if (is_file($localFile)) {
+            $bytes = @file_get_contents($localFile);
+            if (function_exists('finfo_open')) {
+                $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $detected = (string)@finfo_file($finfo, $localFile);
+                    @finfo_close($finfo);
+                    if ($detected !== '') {
+                        $mime = normalizeImageMime($detected);
+                    }
+                }
+            }
+        }
+    }
+
+    if ($bytes !== false && $bytes !== '') {
+        if (!str_starts_with($mime, 'image/')) {
+            $mime = 'image/png';
+        }
+        $extMap = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        ];
+        $ext = $extMap[$mime] ?? 'png';
+        $filename = 'QRIS-ASHBAB-CAFE.' . $ext;
+
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($bytes));
+        header('Cache-Control: no-cache, must-revalidate');
+        header('X-Content-Type-Options: nosniff');
+        echo $bytes;
+        exit;
+    }
+
+    redirect(assetUrl($qrisPath));
+}
+
 // Redirect if cart empty
 if (empty($_SESSION['cart'])) {
     redirect(APP_URL . '/menu.php');
@@ -94,7 +177,14 @@ require_once __DIR__ . '/includes/header.php';
                     <div id="qrisInfo" class="mt-4 text-center" style="display:block">
                         <h6 class="fw-700 mb-3"><i class="fa-solid fa-qrcode me-2" style="color:var(--primary)"></i>Scan QRIS</h6>
                         <?php if (!empty($settings['qris_image'])): ?>
-                            <img src="<?= e(assetUrl($settings['qris_image'])) ?>" alt="QRIS" style="max-width:220px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
+                            <div>
+                                <img id="qrisCheckoutImg" src="<?= e(assetUrl($settings['qris_image'])) ?>" alt="QRIS" style="max-width:220px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1)">
+                            </div>
+                            <div class="mt-2">
+                                <a href="<?= APP_URL ?>/checkout.php?download_qris=1" id="btnDownloadQRIS" download="QRIS-ASHBAB-CAFE.png" class="btn btn-sm rounded-pill px-3 py-1" style="background:var(--accent);color:var(--primary);font-weight:600;border:1px solid rgba(139,69,19,.2)">
+                                    <i class="fa-solid fa-download me-1"></i>Unduh QR Code
+                                </a>
+                            </div>
                         <?php else: ?>
                             <div class="p-4 rounded-3" style="background:#f8fafc;border:2px dashed #e2e8f0">
                                 <i class="fa-solid fa-qrcode fa-3x text-muted"></i>
