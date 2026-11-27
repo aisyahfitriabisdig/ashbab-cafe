@@ -4,22 +4,18 @@
       "runtime": "vercel-php@0.7.3"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/api/index.php"
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
-      "source": "/admin",
-      "destination": "/api/index.php"
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
     },
     {
-      "source": "/cashier",
-      "destination": "/api/index.php"
-    },
-    {
-      "source": "/(.*\\.php)",
-      "destination": "/api/index.php"
+      "src": "/(.*)",
+      "dest": "/api/index.php"
     }
   ]
 }
