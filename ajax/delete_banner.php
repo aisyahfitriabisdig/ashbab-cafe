@@ -13,7 +13,62 @@ if (!verifyCSRF($_POST['csrf_token'] ?? '')) { jsonResponse(['success'=>false,'m
 $action = clean($_POST['action'] ?? 'delete');
 
 $current = db()->fetch("SELECT * FROM settings LIMIT 1");
-if (!$current || empty($current['banner'])) {
+if (!$current) {
+    jsonResponse(['success'=>false,'message'=>'Pengaturan tidak ditemukan']);
+}
+
+if ($action === 'menu_bg_delete' || $action === 'menu_bg_reorder') {
+    ensureMenuBgColumn();
+    $cfg    = getMenuBgConfig();
+    $bucket = in_array($_POST['bucket'] ?? '', ['shared', 'home', 'menu'], true) ? $_POST['bucket'] : 'shared';
+    $key    = 'images_' . $bucket;
+    $list   = $cfg[$key] ?? [];
+
+    if ($action === 'menu_bg_reorder') {
+        $requested = json_decode((string)($_POST['order'] ?? ''), true);
+        if (!is_array($requested)) {
+            jsonResponse(['success'=>false,'message'=>'Format urutan tidak valid']);
+        }
+        $newOrder = [];
+        foreach ($requested as $item) {
+            $item = trim((string)$item);
+            if ($item !== '' && in_array($item, $list, true) && !in_array($item, $newOrder, true)) {
+                $newOrder[] = $item;
+            }
+        }
+        foreach ($list as $existing) {
+            if (!in_array($existing, $newOrder, true)) {
+                $newOrder[] = $existing;
+            }
+        }
+        $cfg[$key] = array_values($newOrder);
+        db()->execute("UPDATE settings SET menu_bg_config=? WHERE id=?", [json_encode($cfg, JSON_UNESCAPED_SLASHES), $current['id']]);
+        jsonResponse(['success'=>true,'message'=>'Urutan background menu berhasil disimpan']);
+    }
+
+    $pathToDelete = $_POST['path'] ?? '';
+    if ($pathToDelete === '') {
+        jsonResponse(['success'=>false,'message'=>'Path tidak valid']);
+    }
+    $newList = [];
+    $found   = false;
+    foreach ($list as $p) {
+        if ($p === $pathToDelete && !$found) {
+            $found = true;
+            deleteUploadedFile($p);
+        } else {
+            $newList[] = $p;
+        }
+    }
+    if (!$found) {
+        jsonResponse(['success'=>false,'message'=>'Gambar tidak ditemukan']);
+    }
+    $cfg[$key] = array_values($newList);
+    db()->execute("UPDATE settings SET menu_bg_config=? WHERE id=?", [json_encode($cfg, JSON_UNESCAPED_SLASHES), $current['id']]);
+    jsonResponse(['success'=>true,'message'=>'Gambar background menu berhasil dihapus']);
+}
+
+if (empty($current['banner'])) {
     jsonResponse(['success'=>false,'message'=>'Banner tidak ditemukan']);
 }
 

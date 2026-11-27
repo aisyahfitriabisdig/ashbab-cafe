@@ -26,8 +26,10 @@ require_once __DIR__ . '/includes/header.php';
 <body>
 <?php require_once __DIR__ . '/includes/navbar.php'; ?>
 
-<div class="menu-page-wrapper">
-<div class="container py-5">
+<?php $pageMenuBgHtml = renderMenuSectionBg('menu'); ?>
+<div class="menu-page-wrapper <?= $pageMenuBgHtml !== '' ? 'has-custom-menu-bg' : '' ?>">
+<?= $pageMenuBgHtml ?>
+<div class="container py-5 position-relative" style="z-index:2">
 
     <!-- Page Title -->
     <div class="text-center mb-5" data-aos="fade-up">

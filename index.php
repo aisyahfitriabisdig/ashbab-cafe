@@ -189,8 +189,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ============================================================
      BEST SELLER SECTION
      ============================================================ -->
-<section class="menu-section" id="menu">
-    <div class="container">
+<?php $homeMenuBgHtml = renderMenuSectionBg('home'); ?>
+<section class="menu-section <?= $homeMenuBgHtml !== '' ? 'has-custom-menu-bg' : '' ?>" id="menu">
+    <?= $homeMenuBgHtml ?>
+    <div class="container position-relative" style="z-index:2">
         <div class="text-center mb-5" data-aos="fade-up">
             <div class="hero-badge" style="background:rgba(139,69,19,.08);border-color:rgba(139,69,19,.2);color:var(--primary)">
                 <i class="fa-solid fa-star me-2"></i>Terlaris

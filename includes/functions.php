@@ -337,10 +337,33 @@ function assetExists(?string $path): bool {
 // ============================================================
 // Settings
 // ============================================================
-function getSettings(): array {
+function ensureMenuBgColumn(): void {
+    static $ensured = false;
+    if ($ensured) return;
+    $ensured = true;
+
+    try {
+        if (DB_DRIVER === 'pgsql') {
+            db()->execute("ALTER TABLE settings ADD COLUMN IF NOT EXISTS menu_bg_config TEXT DEFAULT NULL");
+        } else {
+            $col = db()->fetch("SHOW COLUMNS FROM settings LIKE 'menu_bg_config'");
+            if (!$col) {
+                db()->execute("ALTER TABLE settings ADD COLUMN menu_bg_config TEXT DEFAULT NULL");
+            }
+        }
+    } catch (Throwable $e) {
+        // Ignore if already exists
+    }
+}
+
+function getSettings(bool $refresh = false): array {
     static $settings = null;
-    if ($settings === null) {
+    if ($settings === null || $refresh) {
         $settings = db()->fetch("SELECT * FROM settings LIMIT 1") ?? [];
+        if (!empty($settings) && !array_key_exists('menu_bg_config', $settings)) {
+            ensureMenuBgColumn();
+            $settings = db()->fetch("SELECT * FROM settings LIMIT 1") ?? $settings;
+        }
     }
     return $settings;
 }
@@ -348,6 +371,119 @@ function getSettings(): array {
 function getSetting(string $key, string $default = ''): string {
     $settings = getSettings();
     return $settings[$key] ?? $default;
+}
+
+function getMenuBgConfig(): array {
+    $settings = getSettings();
+    $defaults = [
+        'enabled'         => true,
+        'mode'            => 'same', // 'same' | 'separate'
+        'position'        => 'center center',
+        'size'            => 'cover',
+        'attachment'      => 'scroll',
+        'overlay_opacity' => 75,
+        'images_shared'   => [],
+        'images_home'     => [],
+        'images_menu'     => [],
+    ];
+
+    if (empty($settings['menu_bg_config'])) {
+        return $defaults;
+    }
+
+    $decoded = json_decode((string)$settings['menu_bg_config'], true);
+    if (!is_array($decoded)) {
+        return $defaults;
+    }
+
+    $allowedPositions   = ['center center', 'top center', 'bottom center', 'left center', 'right center'];
+    $allowedSizes       = ['cover', 'contain'];
+    $allowedAttachments = ['scroll', 'fixed'];
+
+    $pos = in_array($decoded['position'] ?? '', $allowedPositions, true) ? $decoded['position'] : 'center center';
+    $sz  = in_array($decoded['size'] ?? '', $allowedSizes, true) ? $decoded['size'] : 'cover';
+    $att = in_array($decoded['attachment'] ?? '', $allowedAttachments, true) ? $decoded['attachment'] : 'scroll';
+    $op  = isset($decoded['overlay_opacity']) ? max(0, min(95, (int)$decoded['overlay_opacity'])) : 75;
+
+    $cleanList = static function ($list): array {
+        if (!is_array($list)) return [];
+        $out = [];
+        foreach ($list as $item) {
+            $item = trim((string)$item);
+            if ($item !== '') $out[] = $item;
+        }
+        return array_values($out);
+    };
+
+    return [
+        'enabled'         => !empty($decoded['enabled']),
+        'mode'            => ($decoded['mode'] ?? 'same') === 'separate' ? 'separate' : 'same',
+        'position'        => $pos,
+        'size'            => $sz,
+        'attachment'      => $att,
+        'overlay_opacity' => $op,
+        'images_shared'   => $cleanList($decoded['images_shared'] ?? []),
+        'images_home'     => $cleanList($decoded['images_home'] ?? []),
+        'images_menu'     => $cleanList($decoded['images_menu'] ?? []),
+    ];
+}
+
+function getMenuBgImagesForTarget(string $target = 'home'): array {
+    $cfg = getMenuBgConfig();
+    if (!$cfg['enabled']) {
+        return [];
+    }
+    if ($cfg['mode'] === 'separate') {
+        if ($target === 'menu') {
+            return !empty($cfg['images_menu']) ? $cfg['images_menu'] : $cfg['images_shared'];
+        }
+        return !empty($cfg['images_home']) ? $cfg['images_home'] : $cfg['images_shared'];
+    }
+    return $cfg['images_shared'];
+}
+
+function renderMenuSectionBg(string $target = 'home'): string {
+    $cfg    = getMenuBgConfig();
+    $images = getMenuBgImagesForTarget($target);
+    if (!$cfg['enabled'] || empty($images)) {
+        return '';
+    }
+
+    $pos = e($cfg['position']);
+    $sz  = e($cfg['size']);
+    $att = e($cfg['attachment']);
+
+    $midAlpha  = round(max(0, min(95, (int)$cfg['overlay_opacity'])) / 100, 2);
+    $edgeAlpha = round(min(0.96, $midAlpha + 0.14), 2);
+    $uid       = 'menuBg_' . preg_replace('/[^a-zA-Z0-9]/', '', $target);
+
+    $html  = '<div class="menu-section-bg-wrap" id="' . $uid . '" aria-hidden="true">';
+    foreach ($images as $idx => $imgPath) {
+        $activeClass = $idx === 0 ? ' active' : '';
+        $url         = e(assetUrl($imgPath));
+        $html .= '<div class="menu-section-bg-slide' . $activeClass . '" style="background-image:url(\'' . $url . '\');background-position:' . $pos . ';background-size:' . $sz . ';background-attachment:' . $att . ';"></div>';
+    }
+    $html .= '<div class="menu-section-bg-overlay" style="background:linear-gradient(180deg, rgba(10,10,10,' . $edgeAlpha . ') 0%, rgba(15,15,15,' . $midAlpha . ') 50%, rgba(10,10,10,' . $edgeAlpha . ') 100%);"></div>';
+    $html .= '</div>';
+
+    if (count($images) > 1) {
+        $html .= '<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const wrap = document.getElementById("' . $uid . '");
+    if (!wrap) return;
+    const slides = wrap.querySelectorAll(".menu-section-bg-slide");
+    if (slides.length <= 1) return;
+    let idx = 0;
+    setInterval(function() {
+        slides[idx].classList.remove("active");
+        idx = (idx + 1) % slides.length;
+        slides[idx].classList.add("active");
+    }, 5500);
+});
+</script>';
+    }
+
+    return $html;
 }
 
 // ============================================================

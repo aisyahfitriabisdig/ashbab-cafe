@@ -125,15 +125,113 @@ $bannerPath  = $paths['banner'];
 $qrisPath    = $paths['qris_image'] ?? ($current['qris_image'] ?? null);
 $aboutImg    = $paths['about_image']?? ($current['about_image']?? null);
 
+// Handle Menu Section Background Configuration & Images
+ensureMenuBgColumn();
+$currentMenuBg = getMenuBgConfig();
+
+$allowedPositions   = ['center center', 'top center', 'bottom center', 'left center', 'right center'];
+$allowedSizes       = ['cover', 'contain'];
+$allowedAttachments = ['scroll', 'fixed'];
+
+$menuBgEnabled    = !empty($_POST['menu_bg_enabled']);
+$menuBgMode       = ($_POST['menu_bg_mode'] ?? 'same') === 'separate' ? 'separate' : 'same';
+$menuBgPosition   = in_array($_POST['menu_bg_position'] ?? '', $allowedPositions, true) ? $_POST['menu_bg_position'] : 'center center';
+$menuBgSize       = in_array($_POST['menu_bg_size'] ?? '', $allowedSizes, true) ? $_POST['menu_bg_size'] : 'cover';
+$menuBgAttachment = in_array($_POST['menu_bg_attachment'] ?? '', $allowedAttachments, true) ? $_POST['menu_bg_attachment'] : 'scroll';
+$menuBgOpacity    = isset($_POST['menu_bg_opacity']) ? max(20, min(95, (int)$_POST['menu_bg_opacity'])) : 75;
+
+$bucketKeys = ['shared', 'home', 'menu'];
+$finalBuckets = [];
+
+foreach ($bucketKeys as $bKey) {
+    $existingList = $currentMenuBg['images_' . $bKey] ?? [];
+    $orderField   = 'menu_bg_' . $bKey . '_order';
+    $replaceField = 'menu_bg_' . $bKey . '_replace';
+    $addField     = 'menu_bg_' . $bKey;
+
+    if (isset($_POST[$orderField]) && is_array($_POST[$orderField])) {
+        $list = [];
+        foreach ($_POST[$orderField] as $p) {
+            $p = trim((string)$p);
+            if ($p !== '' && in_array($p, $existingList, true)) {
+                $list[] = $p;
+            }
+        }
+    } else {
+        $list = $existingList;
+    }
+
+    // Handle individual replacements in this bucket
+    if (!empty($_FILES[$replaceField]['name']) && is_array($_FILES[$replaceField]['name'])) {
+        foreach ($_FILES[$replaceField]['name'] as $idx => $repName) {
+            if (($repName ?? '') !== '' && isset($list[$idx])) {
+                $fileArray = [
+                    'name'     => $_FILES[$replaceField]['name'][$idx],
+                    'type'     => $_FILES[$replaceField]['type'][$idx],
+                    'tmp_name' => $_FILES[$replaceField]['tmp_name'][$idx],
+                    'error'    => $_FILES[$replaceField]['error'][$idx],
+                    'size'     => $_FILES[$replaceField]['size'][$idx],
+                ];
+                $newBgPath = uploadFile($fileArray, 'menu_bg');
+                if (!$newBgPath) {
+                    $err = getLastUploadError() ?: 'Periksa format dan ukuran file.';
+                    jsonResponse(['success' => false, 'message' => "Gagal mengganti gambar background menu: {$err}"]);
+                }
+                $oldBgPath = $list[$idx];
+                $list[$idx] = $newBgPath;
+                if ($oldBgPath !== $newBgPath && !in_array($oldBgPath, $list, true)) {
+                    deleteUploadedFile($oldBgPath);
+                }
+            }
+        }
+    }
+
+    // Handle newly added images in this bucket
+    if (!empty($_FILES[$addField]['name']) && is_array($_FILES[$addField]['name'])) {
+        $cnt = count($_FILES[$addField]['name']);
+        for ($i = 0; $i < $cnt; $i++) {
+            if (($_FILES[$addField]['name'][$i] ?? '') !== '') {
+                $fileArray = [
+                    'name'     => $_FILES[$addField]['name'][$i],
+                    'type'     => $_FILES[$addField]['type'][$i],
+                    'tmp_name' => $_FILES[$addField]['tmp_name'][$i],
+                    'error'    => $_FILES[$addField]['error'][$i],
+                    'size'     => $_FILES[$addField]['size'][$i],
+                ];
+                $newBgPath = uploadFile($fileArray, 'menu_bg');
+                if (!$newBgPath) {
+                    $err = getLastUploadError() ?: 'Periksa format dan ukuran file.';
+                    jsonResponse(['success' => false, 'message' => "Gagal mengunggah gambar background menu: {$err}"]);
+                }
+                $list[] = $newBgPath;
+            }
+        }
+    }
+
+    $finalBuckets['images_' . $bKey] = array_values($list);
+}
+
+$menuBgConfigJson = json_encode([
+    'enabled'         => $menuBgEnabled,
+    'mode'            => $menuBgMode,
+    'position'        => $menuBgPosition,
+    'size'            => $menuBgSize,
+    'attachment'      => $menuBgAttachment,
+    'overlay_opacity' => $menuBgOpacity,
+    'images_shared'   => $finalBuckets['images_shared'],
+    'images_home'     => $finalBuckets['images_home'],
+    'images_menu'     => $finalBuckets['images_menu'],
+], JSON_UNESCAPED_SLASHES);
+
 if ($current) {
     db()->execute(
-        "UPDATE settings SET cafe_name=?,address=?,phone=?,email=?,bank_account=?,footer_text=?,tax_percent=?,logo=?,favicon=?,banner=?,qris_image=?,about_image=? WHERE id=?",
-        [$cafeName,$address,$phone,$email,$bankAccount,$footerText,$taxPercent,$logoPath,$faviconPath,$bannerPath,$qrisPath,$aboutImg,$current['id']]
+        "UPDATE settings SET cafe_name=?,address=?,phone=?,email=?,bank_account=?,footer_text=?,tax_percent=?,logo=?,favicon=?,banner=?,qris_image=?,about_image=?,menu_bg_config=? WHERE id=?",
+        [$cafeName,$address,$phone,$email,$bankAccount,$footerText,$taxPercent,$logoPath,$faviconPath,$bannerPath,$qrisPath,$aboutImg,$menuBgConfigJson,$current['id']]
     );
 } else {
     db()->insert(
-        "INSERT INTO settings (cafe_name,address,phone,email,bank_account,footer_text,tax_percent,logo,favicon,banner,qris_image,about_image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-        [$cafeName,$address,$phone,$email,$bankAccount,$footerText,$taxPercent,$logoPath,$faviconPath,$bannerPath,$qrisPath,$aboutImg]
+        "INSERT INTO settings (cafe_name,address,phone,email,bank_account,footer_text,tax_percent,logo,favicon,banner,qris_image,about_image,menu_bg_config) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [$cafeName,$address,$phone,$email,$bankAccount,$footerText,$taxPercent,$logoPath,$faviconPath,$bannerPath,$qrisPath,$aboutImg,$menuBgConfigJson]
     );
 }
 

@@ -142,7 +142,8 @@ CREATE TABLE IF NOT EXISTS settings (
   bank_account TEXT,
   footer_text TEXT,
   tax_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-  about_image VARCHAR(255) DEFAULT NULL
+  about_image VARCHAR(255) DEFAULT NULL,
+  menu_bg_config TEXT DEFAULT NULL
 );
 
 -- ============================================================

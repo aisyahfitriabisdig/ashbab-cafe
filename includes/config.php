@@ -56,7 +56,7 @@ if ($envAppUrl) {
     define('APP_URL', 'http://localhost/ashbab-cafe');
 }
 
-define('APP_VERSION', '1.1.0');
+define('APP_VERSION', '1.2.0');
 
 // ============================================================
 // Path Configuration
