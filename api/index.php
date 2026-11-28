@@ -10,12 +10,34 @@ $rootReal = realpath($root);
 $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $uriPath = '/' . ltrim($uriPath, '/');
 
-if ($uriPath === '/') {
-    $uriPath = '/index.php';
-} elseif ($uriPath === '/admin' || $uriPath === '/admin/') {
-    $uriPath = '/admin/dashboard.php';
-} elseif ($uriPath === '/cashier' || $uriPath === '/cashier/') {
-    $uriPath = '/cashier/dashboard.php';
+// Support Google Search Console HTML file verification (e.g. /google1234567890abcdef.html)
+if (preg_match('#^/(google[a-zA-Z0-9]+\.html)$#', $uriPath, $m)) {
+    header('Content-Type: text/html; charset=utf-8');
+    echo 'google-site-verification: ' . $m[1];
+    exit;
+}
+
+$cleanRoutes = [
+    '/'            => '/index.php',
+    '/beranda'     => '/index.php',
+    '/home'        => '/index.php',
+    '/menu'        => '/menu.php',
+    '/tracking'    => '/tracking.php',
+    '/about'       => '/about.php',
+    '/tentang'     => '/about.php',
+    '/cart'        => '/cart.php',
+    '/keranjang'   => '/cart.php',
+    '/checkout'    => '/checkout.php',
+    '/robots.txt'  => '/robots.php',
+    '/sitemap.xml' => '/sitemap.php',
+    '/admin'       => '/admin/dashboard.php',
+    '/admin/'      => '/admin/dashboard.php',
+    '/cashier'     => '/cashier/dashboard.php',
+    '/cashier/'    => '/cashier/dashboard.php',
+];
+
+if (isset($cleanRoutes[$uriPath])) {
+    $uriPath = $cleanRoutes[$uriPath];
 }
 
 $target = realpath($root . $uriPath);

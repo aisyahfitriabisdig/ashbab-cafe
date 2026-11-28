@@ -95,6 +95,53 @@ require_once __DIR__ . '/../includes/header.php';
                   </div>
                 </div>
               </div>
+
+              <!-- Google Search Console & SEO -->
+              <div class="col-12 pt-2">
+                <hr class="my-2">
+                <h6 class="fw-700 mb-2"><i class="fa-brands fa-google me-2" style="color:var(--primary)"></i>Google Search Console &amp; SEO (Pencarian Google)</h6>
+                <p class="text-muted small mb-3">
+                   Konfigurasi agar seluruh halaman publik terindeks oleh Google dan saat pengguna mengetik <b>ashbab cafe</b> atau <b>ASHBAB CAFE</b> di browser, Google menampilkan <b>1 hasil utama (Halaman Beranda)</b> yang menghubungkan seluruh halaman publik tanpa harus mengetik link satu per satu.
+                </p>
+                <div class="row g-3">
+                  <div class="col-md-12">
+                    <label class="admin-form-label">Kode Verifikasi Google Search Console <small class="text-muted">(Tag HTML / google-site-verification)</small></label>
+                    <input type="text" class="admin-input" name="google_verification" value="<?= e($extraCfg['google_verification'] ?? '') ?>" placeholder='Tempel kode token atau seluruh tag <meta name="google-site-verification" content="...">'>
+                    <small class="text-muted d-block mt-1">
+                      Di Google Search Console, pilih metode <b>Tag HTML</b> pada bagian Verifikasi Kepemilikan, lalu tempel kodenya di sini dan klik Simpan.
+                    </small>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="admin-form-label">Deskripsi SEO Google (Meta Description)</label>
+                    <textarea class="admin-input" name="seo_description" rows="2"><?= e($extraCfg['seo_description'] ?? '') ?></textarea>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="admin-form-label">Kata Kunci Pencarian (Keywords)</label>
+                    <input type="text" class="admin-input" name="seo_keywords" value="<?= e($extraCfg['seo_keywords'] ?? 'ashbab cafe, ASHBAB CAFE, ashbab coffee, kafe ashbab') ?>">
+                  </div>
+                  <div class="col-md-12">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" role="switch" id="seoSingleResult" name="seo_single_result" value="1" <?= !empty($extraCfg['seo_single_result']) ? 'checked' : '' ?>>
+                      <label class="form-check-label fw-600 ms-1" for="seoSingleResult">
+                        Konsolidasi Hasil Pencarian Google ke 1 Halaman Utama (Canonical ke Beranda)
+                      </label>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                      Saat aktif, semua halaman publik (Beranda, Menu, Tracking, Tentang) tetap dijelajahi &amp; diindeks Google, tetapi dikonsolidasikan ke <b><?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/</b> sehingga hasil pencarian di Google hanya menampilkan 1 pintu utama (Halaman Beranda).
+                    </small>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="p-3 rounded-3" style="background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.25)">
+                      <div class="fw-700 small mb-1" style="color:var(--primary)"><i class="fa-solid fa-sitemap me-1"></i>Link Sitemap &amp; Robots untuk Google Search Console:</div>
+                      <div class="small text-muted">
+                        • URL Utama: <a href="<?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/" target="_blank" style="color:var(--primary)"><?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/</a><br>
+                        • URL Sitemap XML: <a href="<?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/sitemap.xml" target="_blank" style="color:var(--primary)"><?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/sitemap.xml</a><br>
+                        • URL Robots.txt: <a href="<?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/robots.txt" target="_blank" style="color:var(--primary)"><?= e(rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/')) ?>/robots.txt</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -217,6 +217,15 @@ $hoursWeekendLabel = clean($_POST['hours_weekend_label'] ?? '');
 $hoursWeekendTime  = clean($_POST['hours_weekend_time']  ?? '');
 $hoursBadgeText    = clean($_POST['hours_badge_text']    ?? '');
 
+$gscRaw = trim((string)($_POST['google_verification'] ?? ''));
+if (preg_match('/content=["\']([^"\']+)["\']/i', $gscRaw, $m)) {
+    $gscRaw = trim($m[1]);
+}
+$gscVerification = clean($gscRaw);
+$seoDescription  = clean($_POST['seo_description'] ?? '');
+$seoKeywords     = clean($_POST['seo_keywords']    ?? '');
+$seoSingleResult = !empty($_POST['seo_single_result']);
+
 $menuBgConfigJson = json_encode([
     'enabled'             => $menuBgEnabled,
     'mode'                => $menuBgMode,
@@ -232,6 +241,10 @@ $menuBgConfigJson = json_encode([
     'hours_weekend_label' => $hoursWeekendLabel !== '' ? $hoursWeekendLabel : 'Sabtu – Minggu',
     'hours_weekend_time'  => $hoursWeekendTime  !== '' ? $hoursWeekendTime  : '08.00 – 23.00',
     'hours_badge_text'    => $hoursBadgeText,
+    'google_verification' => $gscVerification,
+    'seo_description'     => $seoDescription !== '' ? $seoDescription : ($currentMenuBg['seo_description'] ?? ''),
+    'seo_keywords'        => $seoKeywords    !== '' ? $seoKeywords    : ($currentMenuBg['seo_keywords'] ?? ''),
+    'seo_single_result'   => $seoSingleResult,
 ], JSON_UNESCAPED_SLASHES);
 
 if ($current) {

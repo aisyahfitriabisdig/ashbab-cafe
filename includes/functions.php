@@ -409,6 +409,10 @@ function getMenuBgConfig(): array {
         'hours_weekend_label' => 'Sabtu – Minggu',
         'hours_weekend_time'  => '08.00 – 23.00',
         'hours_badge_text'    => 'Buka Setiap Hari',
+        'google_verification' => '',
+        'seo_description'     => 'ASHBAB CAFE (ashbab cafe) - Nikmati kopi terbaik setiap hari. Pesan menu kopi, minuman, dan makanan favorit Anda langsung dari meja dengan cepat, mudah, dan lezat.',
+        'seo_keywords'        => 'ashbab cafe, ASHBAB CAFE, ashbab coffee, kafe ashbab, kopi ashbab, menu ashbab cafe, pesan kopi online',
+        'seo_single_result'   => true,
     ];
 
     if (empty($settings['menu_bg_config'])) {
@@ -447,6 +451,14 @@ function getMenuBgConfig(): array {
         ? trim((string)$decoded['hours_badge_text'])
         : $defaults['hours_badge_text'];
 
+    $gscRaw = trim((string)($decoded['google_verification'] ?? ''));
+    if (preg_match('/content=["\']([^"\']+)["\']/i', $gscRaw, $m)) {
+        $gscRaw = trim($m[1]);
+    }
+    $seoDesc = trim((string)($decoded['seo_description'] ?? ''));
+    $seoKw   = trim((string)($decoded['seo_keywords']    ?? ''));
+    $seoSingle = array_key_exists('seo_single_result', $decoded) ? !empty($decoded['seo_single_result']) : true;
+
     return [
         'enabled'             => !empty($decoded['enabled']),
         'mode'                => ($decoded['mode'] ?? 'same') === 'separate' ? 'separate' : 'same',
@@ -462,6 +474,10 @@ function getMenuBgConfig(): array {
         'hours_weekend_label' => $weLabel !== '' ? $weLabel : $defaults['hours_weekend_label'],
         'hours_weekend_time'  => $weTime  !== '' ? $weTime  : $defaults['hours_weekend_time'],
         'hours_badge_text'    => $badgeTx,
+        'google_verification' => $gscRaw,
+        'seo_description'     => $seoDesc !== '' ? $seoDesc : $defaults['seo_description'],
+        'seo_keywords'        => $seoKw   !== '' ? $seoKw   : $defaults['seo_keywords'],
+        'seo_single_result'   => $seoSingle,
     ];
 }
 
