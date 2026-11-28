@@ -17,10 +17,11 @@ function pollCashierNotifications() {
     if (isPollingCashier) return;
     isPollingCashier = true;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const filterStatus = urlParams.get('status') || '';
+    const urlParams     = new URLSearchParams(window.location.search);
+    const filterStatus  = urlParams.get('status') || '';
+    const paymentFilter = urlParams.get('payment_filter') || 'all';
 
-    fetch(APP_URL + '/ajax/notifications.php?role=cashier&filter_status=' + encodeURIComponent(filterStatus) + '&_t=' + Date.now())
+    fetch(APP_URL + '/ajax/notifications.php?role=cashier&filter_status=' + encodeURIComponent(filterStatus) + '&payment_filter=' + encodeURIComponent(paymentFilter) + '&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
             isPollingCashier = false;
@@ -56,16 +57,32 @@ function pollCashierNotifications() {
                 }
             }
 
-            // Live DOM update for order cards whenever any order is created/updated
+            // Update payment counts in Kelola Pembayaran without reload
+            if (res.payment_counts) {
+                const p_pend = document.getElementById('pay_count_pending');
+                const p_wait = document.getElementById('pay_count_waiting_submit');
+                const p_sub  = document.getElementById('pay_count_submitted');
+                const p_rej  = document.getElementById('pay_count_rejected');
+                if (p_pend) p_pend.textContent = res.payment_counts.pending        || 0;
+                if (p_wait) p_wait.textContent = res.payment_counts.waiting_submit || 0;
+                if (p_sub)  p_sub.textContent  = res.payment_counts.submitted      || 0;
+                if (p_rej)  p_rej.textContent  = res.payment_counts.rejected       || 0;
+            }
+
+            // Live DOM update for order & payment cards whenever any transaction is created/updated
             if (res.orders_hash && res.orders_hash !== cashierOrdersHash) {
                 cashierOrdersHash = res.orders_hash;
-                const dashWrap   = document.getElementById('cashierDashboardOrders');
-                const ordersWrap = document.getElementById('cashierOrdersGrid');
+                const dashWrap     = document.getElementById('cashierDashboardOrders');
+                const ordersWrap   = document.getElementById('cashierOrdersGrid');
+                const paymentsWrap = document.getElementById('cashierPaymentsGrid');
                 if (dashWrap && typeof res.cashier_dashboard_html === 'string') {
                     dashWrap.innerHTML = res.cashier_dashboard_html;
                 }
                 if (ordersWrap && typeof res.cashier_orders_html === 'string') {
                     ordersWrap.innerHTML = res.cashier_orders_html;
+                }
+                if (paymentsWrap && typeof res.cashier_payments_html === 'string') {
+                    paymentsWrap.innerHTML = res.cashier_payments_html;
                 }
             }
         }).catch(() => {
@@ -152,7 +169,7 @@ function cashierUpdateStatus(orderId, status) {
 function confirmPayment(orderId) {
     Swal.fire({
         title: 'Konfirmasi Pembayaran',
-        text: 'Tandai pembayaran ini sebagai dikonfirmasi?',
+        text: 'Tandai pembayaran ini sebagai dikonfirmasi agar pelanggan dapat membuat pesanan?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#10b981',
@@ -165,7 +182,34 @@ function confirmPayment(orderId) {
                 order_id: orderId, payment_action:'confirm', csrf_token: CSRF_TOKEN
             }, res => {
                 if (res.success) {
-                    showToast('Pembayaran dikonfirmasi!', 'success');
+                    showToast('Pembayaran dikonfirmasi! Menunggu pelanggan klik Buat Pesanan.', 'success');
+                    cashierOrdersHash = '';
+                    pollCashierNotifications();
+                } else {
+                    alertError(res.message);
+                }
+            });
+        }
+    });
+}
+
+function rejectPaymentCashier(orderId) {
+    Swal.fire({
+        title: 'Tolak Pembayaran',
+        text: 'Yakin ingin menolak pembayaran QRIS ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Tolak',
+        cancelButtonText: 'Batal',
+    }).then(result => {
+        if (result.isConfirmed) {
+            ajaxPost(APP_URL + '/ajax/update_order_status.php', {
+                order_id: orderId, payment_action:'reject', csrf_token: CSRF_TOKEN
+            }, res => {
+                if (res.success) {
+                    showToast('Pembayaran telah ditolak.', 'info');
                     cashierOrdersHash = '';
                     pollCashierNotifications();
                 } else {

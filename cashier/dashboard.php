@@ -7,18 +7,19 @@ require_once __DIR__ . '/../includes/auth.php';
 requireRole('cashier', 'admin');
 
 $pageTitle = 'Dashboard Kasir';
+ensureOrderSubmittedColumn();
 
 $counts = [
-    'waiting'    => db()->fetch("SELECT COUNT(*) c FROM orders WHERE order_status='waiting'")['c'] ?? 0,
-    'processing' => db()->fetch("SELECT COUNT(*) c FROM orders WHERE order_status IN ('accepted','processing')")['c'] ?? 0,
-    'completed'  => db()->fetch("SELECT COUNT(*) c FROM orders WHERE order_status='completed' AND DATE(created_at)=CURRENT_DATE")['c'] ?? 0,
+    'waiting'    => db()->fetch("SELECT COUNT(*) c FROM orders WHERE COALESCE(is_submitted,1)=1 AND payment_status='confirmed' AND order_status='waiting'")['c'] ?? 0,
+    'processing' => db()->fetch("SELECT COUNT(*) c FROM orders WHERE COALESCE(is_submitted,1)=1 AND payment_status='confirmed' AND order_status IN ('accepted','processing')")['c'] ?? 0,
+    'completed'  => db()->fetch("SELECT COUNT(*) c FROM orders WHERE COALESCE(is_submitted,1)=1 AND order_status='completed' AND DATE(created_at)=CURRENT_DATE")['c'] ?? 0,
 ];
 $todayIncome = db()->fetch(
-    "SELECT COALESCE(SUM(total_amount),0) c FROM orders WHERE order_status='completed' AND DATE(created_at)=CURRENT_DATE"
+    "SELECT COALESCE(SUM(total_amount),0) c FROM orders WHERE COALESCE(is_submitted,1)=1 AND order_status='completed' AND DATE(created_at)=CURRENT_DATE"
 )['c'] ?? 0;
 
 $recentOrders = db()->fetchAll(
-    "SELECT * FROM orders WHERE order_status NOT IN ('completed','cancelled') ORDER BY created_at DESC LIMIT 10"
+    "SELECT * FROM orders WHERE COALESCE(is_submitted,1)=1 AND payment_status='confirmed' AND order_status NOT IN ('completed','cancelled') ORDER BY created_at DESC LIMIT 10"
 );
 
 require_once __DIR__ . '/../includes/header.php';
@@ -118,12 +119,6 @@ require_once __DIR__ . '/../includes/header.php';
               </div>
             </div>
             <div class="order-card-footer flex-wrap gap-2">
-              <?php if ($o['payment_status']==='pending'): ?>
-              <button class="btn btn-success btn-sm rounded-pill flex-fill" onclick="confirmPayment(<?= $o['id'] ?>)">
-                <i class="fa-solid fa-check me-1"></i>Konfirmasi Bayar
-              </button>
-              <?php endif; ?>
-              
               <?php if ($o['order_status']==='waiting'): ?>
               <button class="btn btn-outline-success btn-sm rounded-pill flex-fill" onclick="cashierUpdateStatus(<?= $o['id'] ?>,'accepted')">
                 <i class="fa-solid fa-thumbs-up me-1"></i>Terima

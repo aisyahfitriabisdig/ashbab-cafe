@@ -10,8 +10,9 @@ $pageTitle = 'Manajemen Pesanan';
 
 $filterStatus = $_GET['status'] ?? '';
 $filterDate   = $_GET['date']   ?? '';
+ensureOrderSubmittedColumn();
 
-$sql    = "SELECT * FROM orders WHERE 1=1";
+$sql    = "SELECT * FROM orders WHERE COALESCE(is_submitted,1)=1";
 $params = [];
 if ($filterStatus) { $sql .= " AND order_status=?";             $params[] = $filterStatus; }
 if ($filterDate)   { $sql .= " AND DATE(created_at)=?";         $params[] = $filterDate; }
@@ -83,16 +84,9 @@ require_once __DIR__ . '/../includes/header.php';
               <td><?= orderStatusBadge($o['order_status']) ?></td>
               <td class="text-muted small"><?= formatDate($o['created_at'],'d M Y H:i') ?></td>
               <td>
-                <?php if ($o['payment_status'] === 'pending'): ?>
-                <button class="btn btn-success btn-sm rounded-pill px-2 py-1 me-1" title="Konfirmasi Pembayaran QRIS"
-                  onclick="confirmPayment(<?= $o['id'] ?>)">
-                  <i class="fa-solid fa-check me-1"></i>Konfirmasi
-                </button>
-                <?php endif; ?>
                 <button class="action-btn view me-1" title="Detail"
                   onclick="viewOrder(<?= $o['id'] ?>)"><i class="fa-solid fa-eye"></i>
                 </button>
-
               </td>
             </tr>
             <?php endforeach; ?>
@@ -175,8 +169,6 @@ function viewOrder(id, silent = false) {
         </div>
         ${proofHtml}
         <div class="mt-4 d-flex gap-2 flex-wrap">
-          ${o.payment_status==='pending'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="confirmPayment(${o.id})"><i class="fa-solid fa-check-double me-1"></i>Konfirmasi Bayar</button>`:''}
-          ${o.payment_status==='pending'?`<button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="rejectPayment(${o.id})"><i class="fa-solid fa-xmark me-1"></i>Tolak Bayar</button>`:''}
           ${o.order_status==='waiting'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'accepted')"><i class="fa-solid fa-check me-1"></i>Terima</button>`:''}
           ${o.order_status==='accepted'?`<button class="btn btn-primary btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'processing')"><i class="fa-solid fa-mug-hot me-1"></i>Proses</button>`:''}
           ${o.order_status==='processing'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'completed')"><i class="fa-solid fa-star me-1"></i>Selesai</button>`:''}

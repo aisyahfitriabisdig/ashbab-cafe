@@ -335,8 +335,27 @@ function assetExists(?string $path): bool {
 }
 
 // ============================================================
-// Settings
+// Settings & Schema Auto-Migrations
 // ============================================================
+function ensureOrderSubmittedColumn(): void {
+    static $ensured = false;
+    if ($ensured) return;
+    $ensured = true;
+
+    try {
+        if (DB_DRIVER === 'pgsql') {
+            db()->execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_submitted SMALLINT NOT NULL DEFAULT 1");
+        } else {
+            $col = db()->fetch("SHOW COLUMNS FROM orders LIKE 'is_submitted'");
+            if (!$col) {
+                db()->execute("ALTER TABLE orders ADD COLUMN is_submitted TINYINT(1) NOT NULL DEFAULT 1");
+            }
+        }
+    } catch (Throwable $e) {
+        // Ignore if already exists
+    }
+}
+
 function ensureMenuBgColumn(): void {
     static $ensured = false;
     if ($ensured) return;
@@ -714,18 +733,19 @@ function getFlash(): ?array {
 // Dashboard Stats
 // ============================================================
 function getDashboardStats(): array {
+    ensureOrderSubmittedColumn();
     $today = date('Y-m-d');
     $month = date('Y-m');
     $year  = date('Y');
 
-    $totalOrders    = db()->fetch("SELECT COUNT(*) as c FROM orders")['c'] ?? 0;
+    $totalOrders    = db()->fetch("SELECT COUNT(*) as c FROM orders WHERE COALESCE(is_submitted, 1) = 1")['c'] ?? 0;
     $totalMenus     = db()->fetch("SELECT COUNT(*) as c FROM menus")['c'] ?? 0;
-    $totalIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE order_status='completed'")['c'] ?? 0;
+    $totalIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE COALESCE(is_submitted, 1) = 1 AND order_status='completed'")['c'] ?? 0;
     $totalExpenses  = db()->fetch("SELECT COALESCE(SUM(amount),0) as c FROM expenses")['c'] ?? 0;
-    $todayIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE order_status='completed' AND DATE(created_at)=?", [$today])['c'] ?? 0;
+    $todayIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE COALESCE(is_submitted, 1) = 1 AND order_status='completed' AND DATE(created_at)=?", [$today])['c'] ?? 0;
     $monthStart     = $month . '-01';
     $nextMonthStart = date('Y-m-d', strtotime($monthStart . ' +1 month'));
-    $monthIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE order_status='completed' AND created_at >= ? AND created_at < ?", [$monthStart, $nextMonthStart])['c'] ?? 0;
+    $monthIncome    = db()->fetch("SELECT COALESCE(SUM(total_amount),0) as c FROM orders WHERE COALESCE(is_submitted, 1) = 1 AND order_status='completed' AND created_at >= ? AND created_at < ?", [$monthStart, $nextMonthStart])['c'] ?? 0;
 
     return [
         'total_orders'   => $totalOrders,

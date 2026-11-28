@@ -16,6 +16,8 @@ if (empty($_SESSION['cart'])) {
     jsonResponse(['success' => false, 'message' => 'Keranjang kosong']);
 }
 
+ensureOrderSubmittedColumn();
+
 $rawName     = clean($_POST['customer_name'] ?? '');
 $rawPhone    = clean($_POST['phone']         ?? '');
 $tableNumber = clean($_POST['table_number']  ?? '');
@@ -88,9 +90,9 @@ try {
 
         $orderNumber = generateOrderNumber();
         $orderId = db()->insert(
-            "INSERT INTO orders (order_number,customer_name,phone,table_number,notes,total_amount,payment_method,payment_proof,payment_status,order_status)
-             VALUES (?,?,?,?,?,?,?,?,?,?)",
-            [$orderNumber, $customerName, $phone, $tableNumber ?: null, $notes ?: null, $total, 'qris', null, 'pending', 'waiting']
+            "INSERT INTO orders (order_number,customer_name,phone,table_number,notes,total_amount,payment_method,payment_proof,payment_status,order_status,is_submitted)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [$orderNumber, $customerName, $phone, $tableNumber ?: null, $notes ?: null, $total, 'qris', null, 'pending', 'waiting', 0]
         );
 
         foreach ($cartItems as $ci) {

@@ -76,8 +76,9 @@ function sideLink(string $href, string $icon, string $label, string $current, st
         <?php elseif ($user['role'] === 'cashier'): ?>
             <!-- CASHIER MENU -->
             <li class="nav-label">KASIR</li>
-            <?= sideLink(APP_URL.'/cashier/dashboard.php', 'fa-gauge', 'Dashboard', $currentFile, 'dashboard.php') ?>
-            <?= sideLink(APP_URL.'/cashier/orders.php', 'fa-receipt', 'Kelola Pesanan', $currentFile, 'orders.php') ?>
+            <?= sideLink(APP_URL.'/cashier/dashboard.php', 'fa-gauge',       'Dashboard',         $currentFile, 'dashboard.php') ?>
+            <?= sideLink(APP_URL.'/cashier/payments.php',  'fa-credit-card', 'Kelola Pembayaran', $currentFile, 'payments.php') ?>
+            <?= sideLink(APP_URL.'/cashier/orders.php',    'fa-receipt',     'Kelola Pesanan',    $currentFile, 'orders.php') ?>
             <div style="display:none;">
                 <?= sideLink(APP_URL.'/cashier/receipt.php',       'fa-print',        'Cetak Struk',   $currentFile, 'receipt.php') ?>
                 <?= sideLink(APP_URL.'/cashier/notifications.php', 'fa-bell',         'Notifikasi',    $currentFile, 'notifications.php') ?>

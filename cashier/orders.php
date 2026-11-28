@@ -8,8 +8,9 @@ requireRole('cashier', 'admin');
 
 $pageTitle     = 'Kelola Pesanan';
 $filterStatus  = $_GET['status'] ?? '';
+ensureOrderSubmittedColumn();
 
-$sql    = "SELECT * FROM orders WHERE 1=1";
+$sql    = "SELECT * FROM orders WHERE COALESCE(is_submitted,1)=1 AND payment_status='confirmed'";
 $params = [];
 if ($filterStatus) { $sql .= " AND order_status=?"; $params[] = $filterStatus; }
 $sql   .= " ORDER BY created_at DESC";
@@ -96,12 +97,6 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
           </div>
           <div class="order-card-footer flex-wrap">
-            <!-- Payment actions -->
-            <?php if ($o['payment_status']==='pending'): ?>
-            <button class="btn btn-success btn-sm rounded-pill" onclick="confirmPayment(<?= $o['id'] ?>)">
-              <i class="fa-solid fa-check me-1"></i>Konfirmasi Bayar
-            </button>
-            <?php endif; ?>
             <!-- Order status actions -->
             <?php if ($o['order_status']==='waiting'): ?>
             <button class="btn btn-outline-success btn-sm rounded-pill" onclick="cashierUpdateStatus(<?= $o['id'] ?>,'accepted')">

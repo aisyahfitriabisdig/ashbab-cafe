@@ -10,24 +10,22 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { jsonResponse(['success'=>false],405); }
 if (!verifyCSRF($_POST['csrf_token'] ?? '')) { jsonResponse(['success'=>false,'message'=>'Token tidak valid'],403); }
 
+ensureOrderSubmittedColumn();
+
 $orderId = (int)($_POST['order_id'] ?? 0);
 $order   = db()->fetch("SELECT * FROM orders WHERE id=?", [$orderId]);
 if (!$order) { jsonResponse(['success'=>false,'message'=>'Pesanan tidak ditemukan']); }
 
-// Payment action
+// Payment action (dikelola dari halaman Kelola Pembayaran sebelum pelanggan membuat pesanan)
 if (!empty($_POST['payment_action'])) {
     $action = $_POST['payment_action'];
     if ($action === 'confirm') {
         db()->execute("UPDATE orders SET payment_status='confirmed' WHERE id=?", [$orderId]);
-        // Auto-accept order
-        if ($order['order_status'] === 'waiting') {
-            db()->execute("UPDATE orders SET order_status='accepted' WHERE id=?", [$orderId]);
-        }
         db()->insert(
             "INSERT INTO notifications (order_id, target, title, message) VALUES (?,?,?,?)",
-            [$orderId, 'customer', "Pembayaran Dikonfirmasi ✅", "Pembayaran QRIS untuk pesanan #{$order['order_number']} telah dikonfirmasi."]
+            [$orderId, 'customer', "Pembayaran Dikonfirmasi ✅", "Pembayaran QRIS untuk tagihan #{$order['order_number']} telah dikonfirmasi. Silakan klik Buat Pesanan."]
         );
-        jsonResponse(['success'=>true,'message'=>'Pembayaran dikonfirmasi']);
+        jsonResponse(['success'=>true,'message'=>'Pembayaran dikonfirmasi. Pelanggan kini dapat membuat pesanan.']);
     } elseif ($action === 'reject') {
         if ($order['order_status'] !== 'cancelled') {
             $items = db()->fetchAll("SELECT menu_id, quantity FROM order_items WHERE order_id=?", [$orderId]);
@@ -41,7 +39,13 @@ if (!empty($_POST['payment_action'])) {
     jsonResponse(['success'=>false,'message'=>'Aksi tidak valid']);
 }
 
-// Order status update
+// Order status update (hanya diizinkan setelah pembayaran dikonfirmasi DAN pelanggan sudah klik Buat Pesanan)
+if ((int)($order['is_submitted'] ?? 1) !== 1) {
+    jsonResponse(['success'=>false,'message'=>'Pelanggan belum menekan tombol Buat Pesanan. Status pesanan belum dapat diperbarui.']);
+}
+if ($order['payment_status'] !== 'confirmed' && ($_POST['status'] ?? '') !== 'cancelled') {
+    jsonResponse(['success'=>false,'message'=>'Pembayaran belum dikonfirmasi.']);
+}
 $status = clean($_POST['status'] ?? '');
 $validStatuses = ['waiting','accepted','processing','completed','cancelled'];
 if (!in_array($status, $validStatuses)) { jsonResponse(['success'=>false,'message'=>'Status tidak valid']); }

@@ -22,17 +22,19 @@ if (!$customerName) { jsonResponse(['success'=>false,'message'=>'Nama pelanggan 
 if (!$phone)        { jsonResponse(['success'=>false,'message'=>'Nomor HP wajib diisi']); }
 if ($paymentMethod !== 'qris') { jsonResponse(['success'=>false,'message'=>'Metode pembayaran tidak valid']); }
 
-// Cek apakah pesanan sudah terverifikasi di database melalui real-time polling
+ensureOrderSubmittedColumn();
+
+// Cek apakah pesanan sudah terverifikasi pembayarannya oleh kasir di database
 $pendingId = isset($_SESSION['pending_order_id']) ? (int)$_SESSION['pending_order_id'] : 0;
 if ($pendingId > 0) {
     $existingOrder = db()->fetch("SELECT * FROM orders WHERE id=?", [$pendingId]);
     if ($existingOrder) {
         if ($existingOrder['payment_status'] !== 'confirmed') {
-            jsonResponse(['success'=>false,'message'=>'Pembayaran Anda belum dikonfirmasi. Mohon tunggu konfirmasi pembayaran QRIS.']);
+            jsonResponse(['success'=>false,'message'=>'Pembayaran Anda belum dikonfirmasi oleh kasir. Mohon tunggu konfirmasi pembayaran QRIS.']);
         }
 
         db()->execute(
-            "UPDATE orders SET customer_name=?, phone=?, table_number=?, notes=? WHERE id=?",
+            "UPDATE orders SET customer_name=?, phone=?, table_number=?, notes=?, order_status='waiting', is_submitted=1, created_at=CURRENT_TIMESTAMP WHERE id=?",
             [$customerName, $phone, $tableNumber ?: null, $notes ?: null, $pendingId]
         );
 

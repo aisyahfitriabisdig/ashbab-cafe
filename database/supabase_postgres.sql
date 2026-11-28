@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_proof VARCHAR(255) DEFAULT NULL,
   payment_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'confirmed', 'rejected')),
   order_status VARCHAR(20) NOT NULL DEFAULT 'waiting' CHECK (order_status IN ('waiting', 'accepted', 'processing', 'completed', 'cancelled')),
+  is_submitted SMALLINT NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
