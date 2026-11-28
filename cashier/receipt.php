@@ -32,6 +32,7 @@ if ($format === 'pdf') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Struk <?= e($order['order_number']) ?></title>
+<link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/uploads/logo/6a36147b46fa5_1781929083.jpeg">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Courier New', monospace; font-size:12px; background:#f5f5f5; }

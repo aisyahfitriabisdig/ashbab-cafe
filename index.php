@@ -369,12 +369,32 @@ document.addEventListener('DOMContentLoaded', function() {
             background: rgba(255,255,255,0.08) !important;
             border-color: rgba(255,215,0,0.3) !important;
         }
+        .contact-icon-circle,
+        a .contact-icon-circle,
+        a:hover .contact-icon-circle,
+        a:focus .contact-icon-circle,
+        a:visited .contact-icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+            color: var(--dark) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 16px;
+            box-shadow: 0 10px 20px rgba(255,215,0,0.2) !important;
+        }
+        .contact-icon-circle i {
+            color: var(--dark) !important;
+        }
         </style>
         <div class="row g-4 justify-content-center">
             <!-- Alamat -->
             <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
                 <div class="contact-card h-100 text-center p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s ease;">
-                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg, var(--primary), var(--secondary));color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 16px; box-shadow: 0 10px 20px rgba(255,215,0,0.2);">
+                    <div class="contact-icon-circle">
                         <i class="fa-solid fa-location-dot"></i>
                     </div>
                     <h6 class="text-white fw-700 mb-3">Alamat</h6>
@@ -385,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- Telepon -->
             <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
                 <div class="contact-card h-100 text-center p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s ease;">
-                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg, var(--primary), var(--secondary));color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 16px; box-shadow: 0 10px 20px rgba(255,215,0,0.2);">
+                    <div class="contact-icon-circle">
                         <i class="fa-solid fa-phone"></i>
                     </div>
                     <h6 class="text-white fw-700 mb-3">Telepon</h6>
@@ -396,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- Email -->
             <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
                 <div class="contact-card h-100 text-center p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s ease;">
-                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg, var(--primary), var(--secondary));color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 16px; box-shadow: 0 10px 20px rgba(255,215,0,0.2);">
+                    <div class="contact-icon-circle">
                         <i class="fa-solid fa-envelope"></i>
                     </div>
                     <h6 class="text-white fw-700 mb-3">Email</h6>
@@ -406,9 +426,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Instagram -->
             <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
-                <a href="https://www.instagram.com/ashbab.coffee?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="text-decoration-none">
+                <a href="https://www.instagram.com/ashbab.coffee?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" class="text-decoration-none d-block h-100">
                     <div class="contact-card h-100 text-center p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; transition: all 0.3s ease; cursor: pointer;">
-                        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);color:white;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px; box-shadow: 0 10px 20px rgba(220,39,67,0.2);">
+                        <div class="contact-icon-circle">
                             <i class="fa-brands fa-instagram"></i>
                         </div>
                         <h6 class="text-white fw-700 mb-3">Instagram</h6>

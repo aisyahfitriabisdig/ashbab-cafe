@@ -18,12 +18,9 @@ $pageTitle = isset($pageTitle) ? e($pageTitle) . ' | ' . $cafeName : $cafeName;
     <meta name="theme-color" content="#FFD700">
     <title><?= $pageTitle ?></title>
 
-    <!-- Favicon -->
-    <?php if (!empty($settings['favicon'])): ?>
-    <link rel="icon" type="image/png" href="<?= e(assetUrl($settings['favicon'])) ?>">
-    <?php else: ?>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
-    <?php endif; ?>
+    <!-- Favicon (Hardcoded from assets/uploads/logo) -->
+    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/uploads/logo/6a36147b46fa5_1781929083.jpeg">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/assets/uploads/logo/6a36147b46fa5_1781929083.jpeg">
 
     <!-- Preconnect CDN -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
