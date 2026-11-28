@@ -20,8 +20,9 @@ function pollCashierNotifications() {
     const urlParams     = new URLSearchParams(window.location.search);
     const filterStatus  = urlParams.get('status') || '';
     const paymentFilter = urlParams.get('payment_filter') || 'all';
+    const focusOrderId  = urlParams.get('order_id') || '';
 
-    fetch(APP_URL + '/ajax/notifications.php?role=cashier&filter_status=' + encodeURIComponent(filterStatus) + '&payment_filter=' + encodeURIComponent(paymentFilter) + '&_t=' + Date.now())
+    fetch(APP_URL + '/ajax/notifications.php?role=cashier&filter_status=' + encodeURIComponent(filterStatus) + '&payment_filter=' + encodeURIComponent(paymentFilter) + '&order_id=' + encodeURIComponent(focusOrderId) + '&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
             isPollingCashier = false;
@@ -35,13 +36,36 @@ function pollCashierNotifications() {
             }
 
             if (cashierNotifInit && count > cashierNotifCount) {
-                showToast('🔔 Ada pesanan / pembayaran QRIS baru!', 'info', 4000);
+                const latest = (res.notifications && res.notifications.length > 0) ? res.notifications[0] : null;
+                const targetUrl = (latest && latest.target_url)
+                    ? latest.target_url
+                    : (APP_URL + '/cashier/payments.php?payment_filter=pending');
+                const toastTitle = (latest && latest.title) ? latest.title : 'Notifikasi Baru';
+                const toastMsg   = (latest && latest.message) ? latest.message : 'Ada pembayaran / pesanan baru yang masuk.';
+                const ctaText    = (latest && latest.is_payment_notif)
+                    ? 'Klik untuk konfirmasi di Kelola Pembayaran'
+                    : 'Klik untuk lihat detail';
+
+                showToast(
+                    `<div onclick="window.location='${targetUrl}'" style="cursor:pointer">
+                        <div class="fw-bold">${toastTitle}</div>
+                        <div style="font-size:.82rem;opacity:.9">${toastMsg}</div>
+                        <div class="mt-1 fw-bold" style="font-size:.78rem;color:#f5c518;text-decoration:underline">${ctaText}</div>
+                    </div>`,
+                    'info',
+                    6000
+                );
                 playNotifSound();
                 const bell = document.getElementById('notifBell');
                 if (bell) { bell.classList.add('bell-ring'); setTimeout(() => bell.classList.remove('bell-ring'), 1000); }
             }
             cashierNotifCount = count;
             cashierNotifInit  = true;
+
+            const notifListWrap = document.getElementById('cashierNotificationsList');
+            if (notifListWrap && typeof res.cashier_notifications_html === 'string') {
+                notifListWrap.innerHTML = res.cashier_notifications_html;
+            }
 
             // Update order counts in dashboard without reload
             if (res.order_counts) {

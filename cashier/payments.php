@@ -10,6 +10,7 @@ ensureOrderSubmittedColumn();
 
 $pageTitle     = 'Kelola Pembayaran';
 $paymentFilter = clean($_GET['payment_filter'] ?? 'all');
+$focusOrderId  = (int)($_GET['order_id'] ?? 0);
 if (!in_array($paymentFilter, ['all', 'pending', 'confirmed', 'rejected'], true)) {
     $paymentFilter = 'all';
 }
@@ -24,10 +25,21 @@ $payCounts = [
 $sql    = "SELECT * FROM orders WHERE 1=1";
 $params = [];
 if ($paymentFilter !== 'all') {
-    $sql .= " AND payment_status=?";
-    $params[] = $paymentFilter;
+    if ($focusOrderId > 0) {
+        $sql .= " AND (payment_status=? OR id=?)";
+        $params[] = $paymentFilter;
+        $params[] = $focusOrderId;
+    } else {
+        $sql .= " AND payment_status=?";
+        $params[] = $paymentFilter;
+    }
 }
-$sql .= " ORDER BY CASE WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+if ($focusOrderId > 0) {
+    $sql .= " ORDER BY CASE WHEN id=? THEN -1 WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+    $params[] = $focusOrderId;
+} else {
+    $sql .= " ORDER BY CASE WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+}
 $payments = db()->fetchAll($sql, $params);
 
 require_once __DIR__ . '/../includes/header.php';
@@ -111,16 +123,22 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="row g-3">
       <?php foreach ($payments as $p):
         $isSubmitted = (int)($p['is_submitted'] ?? 1) === 1;
+        $isFocused   = ($focusOrderId > 0 && (int)$p['id'] === $focusOrderId);
         $pItems = db()->fetchAll(
             "SELECT oi.quantity, m.name FROM order_items oi JOIN menus m ON oi.menu_id=m.id WHERE oi.order_id=?",
             [$p['id']]
         );
       ?>
-      <div class="col-md-6 col-lg-4">
-        <div class="order-card">
+      <div class="col-md-6 col-lg-4" id="payment-card-<?= (int)$p['id'] ?>">
+        <div class="order-card" style="<?= $isFocused ? 'border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(245,197,24,.22);' : '' ?>">
           <div class="order-card-header">
             <div>
-              <div class="order-number"><?= e($p['order_number']) ?></div>
+              <div class="order-number">
+                <?= e($p['order_number']) ?>
+                <?php if ($isFocused): ?>
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem">Dari Notifikasi</span>
+                <?php endif; ?>
+              </div>
               <div class="order-time"><i class="fa-regular fa-clock me-1"></i><?= formatDate($p['updated_at'] ?? $p['created_at'],'H:i - d M') ?></div>
             </div>
             <?= paymentStatusBadge($p['payment_status']) ?>

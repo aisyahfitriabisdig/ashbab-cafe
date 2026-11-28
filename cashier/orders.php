@@ -8,12 +8,26 @@ requireRole('cashier', 'admin');
 
 $pageTitle     = 'Kelola Pesanan';
 $filterStatus  = $_GET['status'] ?? '';
+$focusOrderId  = (int)($_GET['order_id'] ?? 0);
 ensureOrderSubmittedColumn();
+
+if ($focusOrderId > 0) {
+    $focusedOrder = db()->fetch("SELECT id, payment_status, COALESCE(is_submitted,1) as is_submitted FROM orders WHERE id=?", [$focusOrderId]);
+    if ($focusedOrder && ($focusedOrder['payment_status'] === 'pending' || (int)$focusedOrder['is_submitted'] === 0)) {
+        $pFilter = $focusedOrder['payment_status'] === 'pending' ? 'pending' : 'all';
+        redirect(APP_URL . '/cashier/payments.php?payment_filter=' . $pFilter . '&order_id=' . $focusOrderId);
+    }
+}
 
 $sql    = "SELECT * FROM orders WHERE COALESCE(is_submitted,1)=1 AND payment_status='confirmed'";
 $params = [];
 if ($filterStatus) { $sql .= " AND order_status=?"; $params[] = $filterStatus; }
-$sql   .= " ORDER BY created_at DESC";
+if ($focusOrderId > 0) {
+    $sql .= " ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, created_at DESC";
+    $params[] = $focusOrderId;
+} else {
+    $sql .= " ORDER BY created_at DESC";
+}
 $orders = db()->fetchAll($sql, $params);
 
 require_once __DIR__ . '/../includes/header.php';
@@ -62,12 +76,19 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     <?php else: ?>
     <div class="row g-3">
-      <?php foreach ($orders as $o): ?>
-      <div class="col-md-6 col-lg-4">
-        <div class="order-card">
+      <?php foreach ($orders as $o):
+        $isFocused = ($focusOrderId > 0 && (int)$o['id'] === $focusOrderId);
+      ?>
+      <div class="col-md-6 col-lg-4" id="order-card-<?= (int)$o['id'] ?>">
+        <div class="order-card" style="<?= $isFocused ? 'border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(245,197,24,.22);' : '' ?>">
           <div class="order-card-header">
             <div>
-              <div class="order-number"><?= e($o['order_number']) ?></div>
+              <div class="order-number">
+                <?= e($o['order_number']) ?>
+                <?php if ($isFocused): ?>
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem">Dari Notifikasi</span>
+                <?php endif; ?>
+              </div>
               <div class="order-time"><i class="fa-regular fa-clock me-1"></i><?= formatDate($o['created_at'],'H:i d M') ?></div>
             </div>
             <?= orderStatusBadge($o['order_status']) ?>

@@ -14,14 +14,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     ensureOrderSubmittedColumn();
 
     $notifications = db()->fetchAll(
-        "SELECT n.*, o.order_number FROM notifications n
+        "SELECT n.*, o.order_number, o.customer_name, o.payment_status, o.order_status, COALESCE(o.is_submitted, 1) as is_submitted
+         FROM notifications n
          LEFT JOIN orders o ON n.order_id = o.id
          WHERE n.target = 'admin'
-         ORDER BY n.created_at DESC LIMIT 20"
+         ORDER BY n.created_at DESC LIMIT 30"
     );
 
     foreach ($notifications as &$n) {
-        $n['created_at'] = date('d M Y H:i', strtotime($n['created_at']));
+        $n['created_at_formatted'] = date('d M H:i', strtotime($n['created_at']));
+        $n['created_at']           = date('d M Y H:i', strtotime($n['created_at']));
+        $orderId                   = (int)($n['order_id'] ?? 0);
+        $payStatus                 = (string)($n['payment_status'] ?? '');
+        $isSubmitted               = (int)($n['is_submitted'] ?? 1) === 1;
+        $isPaymentNotif            = ($payStatus === 'pending')
+                                     || !$isSubmitted
+                                     || stripos((string)($n['title'] ?? ''), 'QRIS') !== false
+                                     || stripos((string)($n['title'] ?? ''), 'Pembayaran') !== false;
+
+        $n['is_payment_notif'] = $isPaymentNotif;
+        if ($payStatus === 'pending') {
+            $n['target_url']   = APP_URL . '/cashier/payments.php?payment_filter=pending' . ($orderId > 0 ? '&order_id=' . $orderId : '');
+            $n['action_label'] = !empty($n['order_number']) ? 'Konfirmasi Pembayaran #' . $n['order_number'] : 'Buka Kelola Pembayaran';
+        } elseif ($isPaymentNotif) {
+            $n['target_url']   = APP_URL . '/cashier/payments.php?payment_filter=all' . ($orderId > 0 ? '&order_id=' . $orderId : '');
+            $n['action_label'] = !empty($n['order_number']) ? 'Lihat Pembayaran #' . $n['order_number'] : 'Buka Kelola Pembayaran';
+        } else {
+            $n['target_url']   = APP_URL . '/cashier/orders.php' . ($orderId > 0 ? '?order_id=' . $orderId : '');
+            $n['action_label'] = !empty($n['order_number']) ? 'Lihat Pesanan #' . $n['order_number'] : 'Buka Kelola Pesanan';
+        }
     }
     unset($n);
 
@@ -49,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $filterStatus  = clean($_GET['filter_status']  ?? '');
     $filterDate    = clean($_GET['filter_date']    ?? '');
     $paymentFilter = clean($_GET['payment_filter'] ?? 'all');
+    $focusOrderId  = (int)($_GET['order_id']       ?? 0);
     if (!in_array($paymentFilter, ['all', 'pending', 'confirmed', 'rejected'], true)) {
         $paymentFilter = 'all';
     }
@@ -57,16 +79,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         "SELECT id, order_number, customer_name, phone, table_number, notes, total_amount, payment_method, payment_status, order_status, COALESCE(is_submitted,1) as is_submitted, updated_at, created_at
          FROM orders ORDER BY id DESC LIMIT 100"
     );
-    $ordersHash = md5(json_encode($allOrdersForHash) . '|' . $filterStatus . '|' . $filterDate . '|' . $paymentFilter);
+    $ordersHash = md5(json_encode($allOrdersForHash) . '|' . $filterStatus . '|' . $filterDate . '|' . $paymentFilter . '|' . $focusOrderId);
 
     // 0. Cashier Payments Page Grid HTML (all payments before/after confirmation)
     $pSql    = "SELECT * FROM orders WHERE 1=1";
     $pParams = [];
     if ($paymentFilter !== 'all') {
-        $pSql .= " AND payment_status=?";
-        $pParams[] = $paymentFilter;
+        if ($focusOrderId > 0) {
+            $pSql .= " AND (payment_status=? OR id=?)";
+            $pParams[] = $paymentFilter;
+            $pParams[] = $focusOrderId;
+        } else {
+            $pSql .= " AND payment_status=?";
+            $pParams[] = $paymentFilter;
+        }
     }
-    $pSql .= " ORDER BY CASE WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+    if ($focusOrderId > 0) {
+        $pSql .= " ORDER BY CASE WHEN id=? THEN -1 WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+        $pParams[] = $focusOrderId;
+    } else {
+        $pSql .= " ORDER BY CASE WHEN payment_status='pending' THEN 0 WHEN COALESCE(is_submitted,1)=0 THEN 1 ELSE 2 END, updated_at DESC, id DESC LIMIT 60";
+    }
     $paymentsList = db()->fetchAll($pSql, $pParams);
 
     ob_start();
@@ -79,16 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     <div class="row g-3">
       <?php foreach ($paymentsList as $p):
         $isSubmitted = (int)($p['is_submitted'] ?? 1) === 1;
+        $isFocused   = ($focusOrderId > 0 && (int)$p['id'] === $focusOrderId);
         $pItems = db()->fetchAll(
             "SELECT oi.quantity, m.name FROM order_items oi JOIN menus m ON oi.menu_id=m.id WHERE oi.order_id=?",
             [$p['id']]
         );
       ?>
-      <div class="col-md-6 col-lg-4">
-        <div class="order-card">
+      <div class="col-md-6 col-lg-4" id="payment-card-<?= (int)$p['id'] ?>">
+        <div class="order-card" style="<?= $isFocused ? 'border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(245,197,24,.22);' : '' ?>">
           <div class="order-card-header">
             <div>
-              <div class="order-number"><?= e($p['order_number']) ?></div>
+              <div class="order-number">
+                <?= e($p['order_number']) ?>
+                <?php if ($isFocused): ?>
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem">Dari Notifikasi</span>
+                <?php endif; ?>
+              </div>
               <div class="order-time"><i class="fa-regular fa-clock me-1"></i><?= formatDate($p['updated_at'] ?? $p['created_at'],'H:i - d M') ?></div>
             </div>
             <?= paymentStatusBadge($p['payment_status']) ?>
@@ -224,7 +263,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $cSql .= " AND DATE(created_at)=?";
         $cParams[] = $filterDate;
     }
-    $cSql .= " ORDER BY created_at DESC";
+    if ($focusOrderId > 0) {
+        $cSql .= " ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, created_at DESC";
+        $cParams[] = $focusOrderId;
+    } else {
+        $cSql .= " ORDER BY created_at DESC";
+    }
     $filteredOrders = db()->fetchAll($cSql, $cParams);
 
     ob_start();
@@ -235,12 +279,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     </div>
     <?php else: ?>
     <div class="row g-3">
-      <?php foreach ($filteredOrders as $o): ?>
-      <div class="col-md-6 col-lg-4">
-        <div class="order-card">
+      <?php foreach ($filteredOrders as $o):
+        $isFocused = ($focusOrderId > 0 && (int)$o['id'] === $focusOrderId);
+      ?>
+      <div class="col-md-6 col-lg-4" id="order-card-<?= (int)$o['id'] ?>">
+        <div class="order-card" style="<?= $isFocused ? 'border:2px solid var(--primary);box-shadow:0 0 0 4px rgba(245,197,24,.22);' : '' ?>">
           <div class="order-card-header">
             <div>
-              <div class="order-number"><?= e($o['order_number']) ?></div>
+              <div class="order-number">
+                <?= e($o['order_number']) ?>
+                <?php if ($isFocused): ?>
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem">Dari Notifikasi</span>
+                <?php endif; ?>
+              </div>
               <div class="order-time"><i class="fa-regular fa-clock me-1"></i><?= formatDate($o['created_at'],'H:i d M') ?></div>
             </div>
             <?= orderStatusBadge($o['order_status']) ?>
@@ -352,19 +403,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     <?php endforeach;
     $adminOrdersHtml = ob_get_clean();
 
+    // 5. Cashier Notifications Page HTML
+    ob_start();
+    if (empty($notifications)): ?>
+    <div class="text-center py-5 text-muted">
+      <i class="fa-solid fa-bell-slash fa-3x mb-3 d-block opacity-25"></i>
+      <p>Belum ada notifikasi</p>
+    </div>
+    <?php else: ?>
+    <div>
+      <?php foreach ($notifications as $n):
+        $isPendingPay = ($n['payment_status'] ?? '') === 'pending';
+        $isPayNotif   = !empty($n['is_payment_notif']);
+        $targetUrl    = $n['target_url'] ?? (APP_URL . '/cashier/payments.php');
+        $actionLabel  = $n['action_label'] ?? 'Buka Kelola Pembayaran';
+      ?>
+      <div class="notif-item" onclick="window.location='<?= e($targetUrl) ?>'"
+           style="cursor:pointer;border-radius:12px;border:1px solid <?= $isPendingPay ? 'var(--primary)' : 'rgba(255,255,255,.08)' ?>;margin-bottom:10px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;transition:all .2s ease">
+        <div class="notif-item-icon" style="width:42px;height:42px;border-radius:10px;background:rgba(245,197,24,.15);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="fa-solid <?= $isPayNotif ? 'fa-credit-card' : 'fa-receipt' ?>"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="fw-700" style="font-size:.92rem"><?= e($n['title']) ?></div>
+            <?php if ($isPendingPay): ?>
+              <span class="badge bg-warning text-dark" style="font-size:.7rem">Menunggu Konfirmasi Pembayaran</span>
+            <?php endif; ?>
+          </div>
+          <div class="text-muted" style="font-size:.85rem;margin-top:3px"><?= e($n['message']) ?></div>
+          <?php if (!empty($n['order_number'])): ?>
+          <a href="<?= e($targetUrl) ?>" onclick="event.stopPropagation()" class="d-inline-flex align-items-center gap-1 mt-2 text-decoration-none"
+             style="font-size:.82rem;color:var(--primary);font-weight:700">
+            <i class="fa-solid <?= $isPayNotif ? 'fa-credit-card' : 'fa-receipt' ?>"></i>
+            <span><?= e($actionLabel) ?></span>
+          </a>
+          <?php endif; ?>
+        </div>
+        <div class="text-muted" style="font-size:.75rem;white-space:nowrap">
+          <?= e($n['created_at_formatted'] ?? $n['created_at']) ?>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif;
+    $cashierNotificationsHtml = ob_get_clean();
+
     jsonResponse([
-        'success'                => true,
-        'notifications'          => $notifications,
-        'unread_count'           => $unreadCount,
-        'order_counts'           => $orderCounts,
-        'payment_counts'         => $paymentCounts,
-        'orders_hash'            => $ordersHash,
-        'cashier_payments_html'  => $cashierPaymentsHtml,
-        'cashier_dashboard_html' => $cashierDashboardHtml,
-        'cashier_orders_html'    => $cashierOrdersHtml,
-        'admin_recent_html'      => $adminRecentHtml,
-        'admin_orders_html'      => $adminOrdersHtml,
-        'admin_orders_count'     => count($filteredOrders),
+        'success'                    => true,
+        'notifications'              => $notifications,
+        'unread_count'               => $unreadCount,
+        'order_counts'               => $orderCounts,
+        'payment_counts'             => $paymentCounts,
+        'orders_hash'                => $ordersHash,
+        'cashier_payments_html'      => $cashierPaymentsHtml,
+        'cashier_dashboard_html'     => $cashierDashboardHtml,
+        'cashier_orders_html'        => $cashierOrdersHtml,
+        'cashier_notifications_html' => $cashierNotificationsHtml,
+        'admin_recent_html'          => $adminRecentHtml,
+        'admin_orders_html'          => $adminOrdersHtml,
+        'admin_orders_count'         => count($filteredOrders),
     ]);
 }
 
