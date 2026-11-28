@@ -25,11 +25,11 @@
         AOS.init({ duration: 600, once: true, offset: 80 });
         
         <?php if (!empty($_SESSION['my_orders'])): ?>
-        // Customer Notifications Polling (hanya aktif jika pelanggan punya pesanan aktif)
+        // Customer Notifications Polling (real-time tanpa delay)
         const GLOBAL_APP_URL = '<?= APP_URL ?>';
         function pollCustomerNotifications() {
             if (document.hidden) return;
-            fetch(GLOBAL_APP_URL + '/ajax/customer_notifications.php')
+            fetch(GLOBAL_APP_URL + '/ajax/customer_notifications.php?_t=' + Date.now())
             .then(r => r.json())
             .then(res => {
                 if (res.success && res.notifications && res.notifications.length > 0) {
@@ -43,11 +43,12 @@
                     });
                 }
             })
-            .catch(err => console.error(err));
+            .catch(() => {});
         }
         
-        setInterval(pollCustomerNotifications, 20000);
-        setTimeout(pollCustomerNotifications, 2000);
+        setInterval(pollCustomerNotifications, 2000);
+        setTimeout(pollCustomerNotifications, 800);
+        window.addEventListener('focus', pollCustomerNotifications);
         <?php endif; ?>
     </script>
 </body>

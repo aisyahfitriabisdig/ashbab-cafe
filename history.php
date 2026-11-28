@@ -84,7 +84,7 @@ if (!empty($_SESSION['my_orders'])) {
                 <?php if (!empty($historyOrders) && $totalHistory > 5): ?>
                     <div class="text-center mt-4">
                         <button id="btnLoadMore" class="btn btn-outline-dark fw-bold rounded-pill px-4 py-2" onclick="loadMoreHistory()">
-                            <i class="fa-solid fa-angles-down me-2"></i>Lihat Data Pesanan Lainnya
+                            Lihat Data Pesanan Lainnya
                         </button>
                     </div>
                 <?php endif; ?>
@@ -142,7 +142,7 @@ function loadMoreHistory() {
                 if (!res.has_more) {
                     btn.remove();
                 } else {
-                    btn.innerHTML = '<i class="fa-solid fa-angles-down me-2"></i>Lihat Data Pesanan Lainnya';
+                    btn.innerHTML = 'Lihat Data Pesanan Lainnya';
                     btn.disabled = false;
                 }
             } else {
@@ -150,7 +150,7 @@ function loadMoreHistory() {
             }
         })
         .catch(() => {
-            btn.innerHTML = '<i class="fa-solid fa-angles-down me-2"></i>Lihat Data Pesanan Lainnya';
+            btn.innerHTML = 'Lihat Data Pesanan Lainnya';
             btn.disabled = false;
             alert('Gagal memuat data pesanan.');
         });

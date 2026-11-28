@@ -112,7 +112,7 @@ $cafeName = $settings['cafe_name'] ?? 'ASHBAB CAFE';
     </div>
 
     <a href="<?= APP_URL ?>/" class="back-link">
-        <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Website
+        Kembali ke Website
     </a>
 </div>
 

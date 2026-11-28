@@ -164,7 +164,7 @@ require_once __DIR__ . '/includes/header.php';
                         <!-- Step: Processing -->
                         <div class="timeline-item" id="step_processing">
                             <div class="timeline-dot">
-                                <i class="fa-solid fa-fire-burner"></i>
+                                <i class="fa-solid fa-mug-hot"></i>
                             </div>
                             <div class="timeline-content">
                                 <div class="timeline-title">Sedang Diproses</div>
@@ -185,8 +185,7 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
 
                     <div class="mt-4 pt-3 border-top text-center text-muted small">
-                        <i class="fa-solid fa-arrows-rotate me-1"></i>
-                        Status diperbarui otomatis setiap 8 detik
+                        Status diperbarui otomatis secara real-time
                     </div>
                 </div>
             </div>
@@ -202,4 +201,4 @@ require_once __DIR__ . '/includes/header.php';
 const APP_URL    = '<?= APP_URL ?>';
 const CSRF_TOKEN = '<?= generateCSRF() ?>';
 </script>
-<script src="<?= APP_URL ?>/assets/js/tracking.js"></script>
+<script src="<?= APP_URL ?>/assets/js/tracking.js?v=<?= APP_VERSION ?>"></script>

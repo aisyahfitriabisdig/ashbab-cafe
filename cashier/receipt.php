@@ -62,7 +62,7 @@ if ($format === 'pdf') {
 
 <!-- Print Buttons (hidden when printing) -->
 <div class="btn-actions no-print">
-  <a href="<?= APP_URL ?>/cashier/orders.php" class="btn-back">← Kembali</a>
+  <a href="<?= APP_URL ?>/cashier/orders.php" class="btn-back">Kembali</a>
   <button class="btn-print" onclick="window.print()">🖨️ Cetak Struk</button>
 </div>
 

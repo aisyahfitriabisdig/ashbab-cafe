@@ -84,8 +84,8 @@ require_once __DIR__ . '/../includes/header.php';
       $statCards = [
         ['label'=>'Total Pesanan',   'value'=>$stats['total_orders'],   'icon'=>'fa-receipt',         'type'=>'primary', 'prefix'=>'',     'suffix'=>''],
         ['label'=>'Total Menu',      'value'=>$stats['total_menus'],    'icon'=>'fa-utensils',        'type'=>'info',    'prefix'=>'',     'suffix'=>''],
-        ['label'=>'Total Pemasukan', 'value'=>$stats['total_income'],   'icon'=>'fa-arrow-trend-up',  'type'=>'success', 'prefix'=>'Rp ', 'suffix'=>''],
-        ['label'=>'Total Pengeluaran','value'=>$stats['total_expenses'],'icon'=>'fa-arrow-trend-down','type'=>'danger',  'prefix'=>'Rp ', 'suffix'=>''],
+        ['label'=>'Total Pemasukan', 'value'=>$stats['total_income'],   'icon'=>'fa-sack-dollar',     'type'=>'success', 'prefix'=>'Rp ', 'suffix'=>''],
+        ['label'=>'Total Pengeluaran','value'=>$stats['total_expenses'],'icon'=>'fa-wallet',          'type'=>'danger',  'prefix'=>'Rp ', 'suffix'=>''],
         ['label'=>'Total Keuntungan','value'=>$stats['total_profit'],   'icon'=>'fa-coins',           'type'=>'warning', 'prefix'=>'Rp ', 'suffix'=>''],
       ];
       foreach ($statCards as $c): ?>
@@ -148,7 +148,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="table-wrapper">
         <table class="table admin-table mb-0">
           <thead><tr><th>#</th><th>No. Pesanan</th><th>Pelanggan</th><th>Total</th><th>Pembayaran</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead>
-          <tbody>
+          <tbody id="adminRecentOrdersBody">
             <?php foreach ($recentOrders as $i => $o): ?>
             <tr>
               <td><?= $i+1 ?></td>
@@ -238,4 +238,4 @@ new Chart(document.getElementById('topMenuChart'), {
   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
 });
 </script>
-<script src="<?= APP_URL ?>/assets/js/admin.js"></script>
+<script src="<?= APP_URL ?>/assets/js/admin.js?v=<?= APP_VERSION ?>"></script>

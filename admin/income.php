@@ -114,7 +114,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="admin-card">
       <div class="admin-card-header">
         <h2 class="admin-card-title">
-          <i class="fa-solid fa-arrow-trend-up me-2" style="color:#10b981"></i>
+          <i class="fa-solid fa-sack-dollar me-2" style="color:#10b981"></i>
           Riwayat Pemasukan
         </h2>
         <span class="badge bg-success rounded-pill"><?= count($incomes) ?> transaksi</span>

@@ -46,7 +46,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="row g-4 mb-4">
       <div class="col-sm-6">
         <div class="stat-widget danger">
-          <div class="stat-icon danger"><i class="fa-solid fa-arrow-trend-down"></i></div>
+          <div class="stat-icon danger"><i class="fa-solid fa-wallet"></i></div>
           <div class="stat-value"><?= formatRupiah($totalMonth) ?></div>
           <div class="stat-label">Pengeluaran Bulan Ini</div>
         </div>

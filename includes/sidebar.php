@@ -65,7 +65,7 @@ function sideLink(string $href, string $icon, string $label, string $current, st
             <?= sideLink(APP_URL.'/admin/menus.php', 'fa-utensils', 'Menu', $currentFile, 'menus.php') ?>
 
             <li class="nav-label">KEUANGAN</li>
-            <?= sideLink(APP_URL.'/admin/income.php',   'fa-arrow-trend-up',  'Pemasukan',   $currentFile, 'income.php') ?>
+            <?= sideLink(APP_URL.'/admin/income.php',   'fa-sack-dollar',     'Pemasukan',   $currentFile, 'income.php') ?>
             <?= sideLink(APP_URL.'/admin/expenses.php', 'fa-money-bill-wave', 'Pengeluaran', $currentFile, 'expenses.php') ?>
             <?= sideLink(APP_URL.'/admin/reports.php',  'fa-chart-line',      'Laporan',     $currentFile, 'reports.php') ?>
 

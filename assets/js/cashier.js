@@ -7,14 +7,23 @@
 
 let cashierNotifCount = 0;
 let cashierNotifInit  = false;
+let cashierOrdersHash = '';
+let isPollingCashier  = false;
 
 // ============================================================
-// Real-time Notifications (Cashier)
+// Real-time Notifications & Live Order DOM Sync (Cashier)
 // ============================================================
 function pollCashierNotifications() {
-    fetch(APP_URL + '/ajax/notifications.php?role=cashier')
+    if (isPollingCashier) return;
+    isPollingCashier = true;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterStatus = urlParams.get('status') || '';
+
+    fetch(APP_URL + '/ajax/notifications.php?role=cashier&filter_status=' + encodeURIComponent(filterStatus) + '&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
+            isPollingCashier = false;
             if (!res.success) return;
             const badge = document.getElementById('notifBadge');
             const count = res.unread_count || 0;
@@ -25,27 +34,43 @@ function pollCashierNotifications() {
             }
 
             if (cashierNotifInit && count > cashierNotifCount) {
-                showToast('🔔 Ada pesanan / pembayaran QRIS baru!', 'info', 5000);
+                showToast('🔔 Ada pesanan / pembayaran QRIS baru!', 'info', 4000);
                 playNotifSound();
                 const bell = document.getElementById('notifBell');
                 if (bell) { bell.classList.add('bell-ring'); setTimeout(() => bell.classList.remove('bell-ring'), 1000); }
-                if (typeof Swal === 'undefined' || !Swal.isVisible()) {
-                    setTimeout(() => location.reload(), 1500);
-                }
             }
             cashierNotifCount = count;
             cashierNotifInit  = true;
 
-            // Update order counts in dashboard
+            // Update order counts in dashboard without reload
             if (res.order_counts) {
                 const el_new  = document.getElementById('count_waiting');
                 const el_proc = document.getElementById('count_processing');
                 const el_done = document.getElementById('count_completed');
+                const el_inc  = document.getElementById('count_income');
                 if (el_new)  el_new.textContent  = res.order_counts.waiting    || 0;
-                if (el_proc) el_proc.textContent  = res.order_counts.processing || 0;
-                if (el_done) el_done.textContent  = res.order_counts.completed  || 0;
+                if (el_proc) el_proc.textContent = res.order_counts.processing || 0;
+                if (el_done) el_done.textContent = res.order_counts.completed  || 0;
+                if (el_inc && res.order_counts.today_income_formatted) {
+                    el_inc.textContent = res.order_counts.today_income_formatted;
+                }
             }
-        }).catch(() => {});
+
+            // Live DOM update for order cards whenever any order is created/updated
+            if (res.orders_hash && res.orders_hash !== cashierOrdersHash) {
+                cashierOrdersHash = res.orders_hash;
+                const dashWrap   = document.getElementById('cashierDashboardOrders');
+                const ordersWrap = document.getElementById('cashierOrdersGrid');
+                if (dashWrap && typeof res.cashier_dashboard_html === 'string') {
+                    dashWrap.innerHTML = res.cashier_dashboard_html;
+                }
+                if (ordersWrap && typeof res.cashier_orders_html === 'string') {
+                    ordersWrap.innerHTML = res.cashier_orders_html;
+                }
+            }
+        }).catch(() => {
+            isPollingCashier = false;
+        });
 }
 
 function playNotifSound() {
@@ -66,10 +91,14 @@ function playNotifSound() {
     } catch(e) {}
 }
 
-// Start polling
+// Start real-time polling (every 1.5s + on window focus)
 if (typeof APP_URL !== 'undefined') {
     pollCashierNotifications();
-    setInterval(pollCashierNotifications, 7000);
+    setInterval(pollCashierNotifications, 1500);
+    window.addEventListener('focus', pollCashierNotifications);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollCashierNotifications();
+    });
 }
 
 // ============================================================
@@ -86,7 +115,7 @@ function printReceipt(orderId, format = 'browser') {
 }
 
 // ============================================================
-// Order Status Update (Cashier)
+// Order Status Update (Cashier) - Instant Real-Time DOM Update
 // ============================================================
 function cashierUpdateStatus(orderId, status) {
     const labels = {
@@ -110,8 +139,9 @@ function cashierUpdateStatus(orderId, status) {
             order_id: orderId, status, csrf_token: CSRF_TOKEN
         }, res => {
             if (res.success) {
-                showToast('Status diperbarui!', 'success');
-                setTimeout(() => location.reload(), 800);
+                showToast('Status pesanan diperbarui!', 'success');
+                cashierOrdersHash = '';
+                pollCashierNotifications();
             } else {
                 alertError(res.message || 'Gagal update.');
             }
@@ -134,8 +164,13 @@ function confirmPayment(orderId) {
             ajaxPost(APP_URL + '/ajax/update_order_status.php', {
                 order_id: orderId, payment_action:'confirm', csrf_token: CSRF_TOKEN
             }, res => {
-                if (res.success) { alertSuccess('Pembayaran dikonfirmasi.'); setTimeout(() => location.reload(), 1000); }
-                else alertError(res.message);
+                if (res.success) {
+                    showToast('Pembayaran dikonfirmasi!', 'success');
+                    cashierOrdersHash = '';
+                    pollCashierNotifications();
+                } else {
+                    alertError(res.message);
+                }
             });
         }
     });

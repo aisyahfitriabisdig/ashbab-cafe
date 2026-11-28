@@ -61,7 +61,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
       <div class="col-sm-6 col-lg-3">
         <div class="stat-widget primary">
-          <div class="stat-icon primary"><i class="fa-solid fa-fire-burner"></i></div>
+          <div class="stat-icon primary"><i class="fa-solid fa-mug-hot"></i></div>
           <div class="stat-value" id="count_processing"><?= $counts['processing'] ?></div>
           <div class="stat-label">Sedang Diproses</div>
         </div>
@@ -76,7 +76,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="col-sm-6 col-lg-3">
         <div class="stat-widget info">
           <div class="stat-icon info"><i class="fa-solid fa-coins"></i></div>
-          <div class="stat-value" style="font-size:1.2rem"><?= formatRupiah($todayIncome) ?></div>
+          <div class="stat-value" id="count_income" style="font-size:1.2rem"><?= formatRupiah($todayIncome) ?></div>
           <div class="stat-label">Pemasukan Hari Ini</div>
         </div>
       </div>
@@ -89,6 +89,7 @@ require_once __DIR__ . '/../includes/header.php';
         <a href="<?= APP_URL ?>/cashier/orders.php" class="btn btn-sm btn-outline-secondary rounded-pill">Kelola Semua</a>
       </div>
 
+      <div id="cashierDashboardOrders">
       <?php if (empty($recentOrders)): ?>
       <div class="text-center py-5 text-muted">
         <i class="fa-solid fa-inbox fa-3x mb-3 d-block opacity-25"></i>
@@ -129,7 +130,7 @@ require_once __DIR__ . '/../includes/header.php';
               </button>
               <?php elseif ($o['order_status']==='accepted'): ?>
               <button class="btn btn-outline-primary btn-sm rounded-pill flex-fill" onclick="cashierUpdateStatus(<?= $o['id'] ?>,'processing')">
-                <i class="fa-solid fa-fire-burner me-1"></i>Proses
+                <i class="fa-solid fa-mug-hot me-1"></i>Proses
               </button>
               <?php elseif ($o['order_status']==='processing'): ?>
               <button class="btn btn-outline-success btn-sm rounded-pill flex-fill" onclick="cashierUpdateStatus(<?= $o['id'] ?>,'completed')">
@@ -148,6 +149,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endforeach; ?>
       </div>
       <?php endif; ?>
+      </div>
     </div>
   </div>
 </div>
@@ -157,4 +159,4 @@ require_once __DIR__ . '/../includes/header.php';
 const APP_URL    = '<?= APP_URL ?>';
 const CSRF_TOKEN = '<?= generateCSRF() ?>';
 </script>
-<script src="<?= APP_URL ?>/assets/js/cashier.js?v=2"></script>
+<script src="<?= APP_URL ?>/assets/js/cashier.js?v=<?= APP_VERSION ?>"></script>

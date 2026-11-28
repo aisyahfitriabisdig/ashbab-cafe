@@ -94,8 +94,8 @@ require_once __DIR__ . '/../includes/header.php';
       <?php
       $cards = [
         ['Total Pesanan',   $totalOrders,   'fa-receipt',        'primary', true],
-        ['Total Pemasukan', $totalIncome,   'fa-arrow-trend-up', 'success', false],
-        ['Total Pengeluaran',$totalExpenses,'fa-arrow-trend-down','danger', false],
+        ['Total Pemasukan', $totalIncome,   'fa-sack-dollar', 'success', false],
+        ['Total Pengeluaran',$totalExpenses,'fa-wallet','danger', false],
         ['Keuntungan',      $totalProfit,   'fa-coins',          $totalProfit>=0?'warning':'danger', false],
       ];
       foreach ($cards as [$label,$val,$icon,$type,$isCount]): ?>

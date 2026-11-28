@@ -44,7 +44,7 @@ require_once __DIR__ . '/includes/header.php';
 <div class="container">
     <div class="d-flex align-items-center mb-4" data-aos="fade-up">
         <a href="<?= APP_URL ?>/menu.php" class="btn btn-sm me-3" style="background:var(--accent);color:var(--primary);border-radius:50px;padding:8px 18px;font-weight:600">
-            <i class="fa-solid fa-arrow-left me-1"></i>Menu
+            Menu
         </a>
         <h3 class="fw-800 mb-0">Keranjang Belanja</h3>
     </div>
@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <a href="<?= APP_URL ?>/checkout.php" class="btn-primary-cafe w-100 justify-content-center mt-4 d-flex"
                    onclick="saveNotes()">
-                    <i class="fa-solid fa-arrow-right me-2"></i>Lanjut Checkout
+                    Lanjut Checkout
                 </a>
                 <a href="<?= APP_URL ?>/menu.php" class="btn w-100 mt-2 text-center" style="color:var(--primary);font-weight:600">
                     <i class="fa-solid fa-plus me-1"></i>Tambah Menu

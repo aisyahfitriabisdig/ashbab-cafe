@@ -558,11 +558,11 @@ function renderSiteFooter(): string {
             <div class="col-lg-2 col-md-6 col-6">
                 <h6 class="footer-heading">Navigasi</h6>
                 <ul class="footer-links list-unstyled mb-0">
-                    <li><a href="{$appUrl}/"><i class="fa-solid fa-chevron-right"></i>Beranda</a></li>
-                    <li><a href="{$appUrl}/menu.php"><i class="fa-solid fa-chevron-right"></i>Menu Kami</a></li>
-                    <li><a href="{$appUrl}/tracking.php"><i class="fa-solid fa-chevron-right"></i>Lacak Pesanan</a></li>
-                    <li><a href="{$appUrl}/about.php"><i class="fa-solid fa-chevron-right"></i>Tentang Kami</a></li>
-                    <li><a href="{$appUrl}/cart.php"><i class="fa-solid fa-chevron-right"></i>Keranjang</a></li>
+                    <li><a href="{$appUrl}/">Beranda</a></li>
+                    <li><a href="{$appUrl}/menu.php">Menu Kami</a></li>
+                    <li><a href="{$appUrl}/tracking.php">Lacak Pesanan</a></li>
+                    <li><a href="{$appUrl}/about.php">Tentang Kami</a></li>
+                    <li><a href="{$appUrl}/cart.php">Keranjang</a></li>
                 </ul>
             </div>
 
@@ -607,9 +607,6 @@ function renderSiteFooter(): string {
             <p class="mb-0 footer-copy">{$footerText}</p>
             <div class="d-flex align-items-center gap-3">
                 <span class="footer-payment-pill"><i class="fa-solid fa-qrcode me-1" style="color:var(--primary)"></i>QRIS Digital Ready</span>
-                <a href="#" class="footer-top-btn" title="Kembali ke atas" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
-                    <i class="fa-solid fa-arrow-up"></i>
-                </a>
             </div>
         </div>
     </div>

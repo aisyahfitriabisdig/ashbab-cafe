@@ -219,11 +219,11 @@ require_once __DIR__ . '/../includes/header.php';
                     </button>
                     <div class="position-absolute bottom-0 start-0 end-0 p-1 d-flex justify-content-between align-items-center" style="background:rgba(0,0,0,0.68)">
                       <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveMenuBgImage(this, -1)" title="Geser Maju">
-                          <i class="fa-solid fa-chevron-left" style="font-size:.7rem"></i>
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" style="font-size:.68rem" onclick="moveMenuBgImage(this, -1)" title="Geser Maju">
+                          Maju
                         </button>
-                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveMenuBgImage(this, 1)" title="Geser Mundur">
-                          <i class="fa-solid fa-chevron-right" style="font-size:.7rem"></i>
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" style="font-size:.68rem" onclick="moveMenuBgImage(this, 1)" title="Geser Mundur">
+                          Mundur
                         </button>
                       </div>
                       <button type="button" class="btn btn-sm btn-warning py-0 px-2 fw-600" style="font-size:.7rem" onclick="this.closest('.menu-bg-manage-item').querySelector('.menu-bg-replace-input').click()" title="Ganti Gambar Ini">
@@ -305,11 +305,11 @@ require_once __DIR__ . '/../includes/header.php';
                     </button>
                     <div class="position-absolute bottom-0 start-0 end-0 p-1 d-flex justify-content-between align-items-center" style="background:rgba(0,0,0,0.65)">
                       <div class="d-flex gap-1">
-                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveBanner(this, -1)" title="Geser Maju">
-                          <i class="fa-solid fa-chevron-left" style="font-size:.7rem"></i>
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" style="font-size:.68rem" onclick="moveBanner(this, -1)" title="Geser Maju">
+                          Maju
                         </button>
-                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" onclick="moveBanner(this, 1)" title="Geser Mundur">
-                          <i class="fa-solid fa-chevron-right" style="font-size:.7rem"></i>
+                        <button type="button" class="btn btn-sm btn-dark py-0 px-1" style="font-size:.68rem" onclick="moveBanner(this, 1)" title="Geser Mundur">
+                          Mundur
                         </button>
                       </div>
                       <button type="button" class="btn btn-sm btn-warning py-0 px-2 fw-600" style="font-size:.7rem" onclick="triggerReplaceBanner(this)" title="Ubah/Ganti Gambar Ini">

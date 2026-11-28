@@ -61,14 +61,14 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="admin-card">
       <div class="admin-card-header">
         <h2 class="admin-card-title"><i class="fa-solid fa-receipt me-2" style="color:var(--primary)"></i>Daftar Pesanan</h2>
-        <span class="badge bg-secondary rounded-pill"><?= count($orders) ?> pesanan</span>
+        <span class="badge bg-secondary rounded-pill" id="adminOrdersCountBadge"><?= count($orders) ?> pesanan</span>
       </div>
       <div class="table-wrapper">
         <table class="table admin-table" id="ordersTable">
           <thead>
             <tr><th>#</th><th>No. Pesanan</th><th>Pelanggan</th><th>Total</th><th>Pembayaran</th><th>Bayar</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr>
           </thead>
-          <tbody>
+          <tbody id="adminOrdersBody">
             <?php foreach ($orders as $i => $o): ?>
             <tr>
               <td><?= $i+1 ?></td>
@@ -123,16 +123,25 @@ require_once __DIR__ . '/../includes/header.php';
 const APP_URL    = '<?= APP_URL ?>';
 const CSRF_TOKEN = '<?= generateCSRF() ?>';
 
-function viewOrder(id) {
-  const modal = new bootstrap.Modal(document.getElementById('orderModal'));
-  const content = document.getElementById('orderDetailContent');
-  content.innerHTML = '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
-  modal.show();
+let currentOpenOrderId = 0;
 
-  fetch(APP_URL + '/ajax/get_order.php?id=' + id)
+function viewOrder(id, silent = false) {
+  currentOpenOrderId = id;
+  const modalEl = document.getElementById('orderModal');
+  const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
+  const content = document.getElementById('orderDetailContent');
+  if (!silent) {
+    content.innerHTML = '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
+    modal.show();
+  }
+
+  fetch(APP_URL + '/ajax/get_order.php?id=' + id + '&_t=' + Date.now())
     .then(r => r.json())
     .then(res => {
-      if (!res.success) { content.innerHTML = '<p class="text-center text-muted p-4">Gagal memuat data.</p>'; return; }
+      if (!res.success) {
+        if (!silent) content.innerHTML = '<p class="text-center text-muted p-4">Gagal memuat data.</p>';
+        return;
+      }
       const o = res.order;
       const itemsHtml = res.items.map(it =>
         `<tr><td>${it.name}</td><td class="text-center">${it.quantity}</td>
@@ -157,7 +166,7 @@ function viewOrder(id) {
           <div class="col-md-6"><div class="text-muted small">No. Meja</div><div class="fw-600">${o.table_number||'-'}</div></div>
           <div class="col-md-6"><div class="text-muted small">Metode</div><div class="fw-600">${o.payment_method.toUpperCase()}</div></div>
         </div>
-        ${o.notes ? `<div class="mb-3 p-3 rounded-3 bg-light"><i class="fa-solid fa-note-sticky me-2"></i>${o.notes}</div>` : ''}
+        ${o.notes ? `<div class="mb-3 p-3 rounded-3 bg-light text-dark"><i class="fa-solid fa-note-sticky me-2"></i>${o.notes}</div>` : ''}
         <table class="table table-sm mb-3"><thead class="table-light"><tr><th>Menu</th><th class="text-center">Qty</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody>
         <tfoot><tr><td colspan="3" class="text-end fw-700">Total</td><td class="text-end fw-800" style="color:var(--primary)">Rp ${Number(o.total_amount).toLocaleString('id-ID')}</td></tr></tfoot></table>
         <div class="d-flex gap-2 flex-wrap">
@@ -169,13 +178,17 @@ function viewOrder(id) {
           ${o.payment_status==='pending'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="confirmPayment(${o.id})"><i class="fa-solid fa-check-double me-1"></i>Konfirmasi Bayar</button>`:''}
           ${o.payment_status==='pending'?`<button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="rejectPayment(${o.id})"><i class="fa-solid fa-xmark me-1"></i>Tolak Bayar</button>`:''}
           ${o.order_status==='waiting'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'accepted')"><i class="fa-solid fa-check me-1"></i>Terima</button>`:''}
-          ${o.order_status==='accepted'?`<button class="btn btn-primary btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'processing')"><i class="fa-solid fa-fire-burner me-1"></i>Proses</button>`:''}
+          ${o.order_status==='accepted'?`<button class="btn btn-primary btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'processing')"><i class="fa-solid fa-mug-hot me-1"></i>Proses</button>`:''}
           ${o.order_status==='processing'?`<button class="btn btn-success btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'completed')"><i class="fa-solid fa-star me-1"></i>Selesai</button>`:''}
           ${!['completed','cancelled'].includes(o.order_status)?`<button class="btn btn-danger btn-sm rounded-pill px-3" onclick="updateOrderStatus(${o.id},'cancelled')"><i class="fa-solid fa-ban me-1"></i>Batalkan</button>`:''}
         </div>`;
     });
 }
 
+document.getElementById('orderModal')?.addEventListener('hidden.bs.modal', () => {
+  currentOpenOrderId = 0;
+});
+
 initDataTable('ordersTable');
 </script>
-<script src="<?= APP_URL ?>/assets/js/admin.js"></script>
+<script src="<?= APP_URL ?>/assets/js/admin.js?v=<?= APP_VERSION ?>"></script>

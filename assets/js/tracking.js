@@ -6,8 +6,10 @@
 'use strict';
 
 let trackingInterval = null;
+let currentTrackedOrder = null;
 let lastStatus = null;
-let notifSound = null;
+let lastPaymentStatus = null;
+let isPollingTrack = false;
 
 // Create notification sound
 function createSound() {
@@ -24,34 +26,75 @@ function createSound() {
     osc.stop(ctx.currentTime + 0.5);
 }
 
-// Track order by order number
-function trackOrder(orderNumber) {
+function updateActiveOrderButtons(activeOrders) {
+    const container = document.getElementById('activeOrderButtons');
+    if (!container || !Array.isArray(activeOrders)) return;
+
+    const badgeMap = {
+        waiting: '<span class="badge bg-secondary ms-1">Menunggu</span>',
+        accepted: '<span class="badge bg-info ms-1">Diterima</span>',
+        processing: '<span class="badge bg-warning ms-1">Diproses</span>',
+    };
+
+    if (activeOrders.length === 0) {
+        const wrapper = container.closest('.mb-4.p-3.rounded');
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = activeOrders.map(o => `
+        <button type="button" class="btn btn-outline-dark fw-600 rounded-pill" onclick="trackOrder('${o.order_number}')">
+            #${o.order_number} ${badgeMap[o.order_status] || ''}
+        </button>
+    `).join('');
+}
+
+// Track order by order number (silent=true for background real-time polling without flicker)
+function trackOrder(orderNumber, silent = false) {
     const resultDiv = document.getElementById('trackingResult');
     const loadingDiv = document.getElementById('trackingLoading');
 
     if (!orderNumber) {
-        showToast('Masukkan nomor pesanan.', 'warning');
+        if (!silent) showToast('Masukkan nomor pesanan.', 'warning');
         return;
     }
 
-    if (loadingDiv) loadingDiv.style.display = 'block';
-    if (resultDiv) resultDiv.style.display = 'none';
+    if (silent && isPollingTrack) return;
+    isPollingTrack = true;
 
-    fetch(APP_URL + '/ajax/track_order.php?order_number=' + encodeURIComponent(orderNumber))
+    if (!silent) {
+        if (currentTrackedOrder !== orderNumber) {
+            lastStatus = null;
+            lastPaymentStatus = null;
+        }
+        if (loadingDiv && (!resultDiv || resultDiv.style.display === 'none')) {
+            loadingDiv.style.display = 'block';
+        }
+    }
+    currentTrackedOrder = orderNumber;
+
+    fetch(APP_URL + '/ajax/track_order.php?order_number=' + encodeURIComponent(orderNumber) + '&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
+            isPollingTrack = false;
             if (loadingDiv) loadingDiv.style.display = 'none';
             if (res.success) {
                 renderTracking(res.order);
+                if (res.active_orders) {
+                    updateActiveOrderButtons(res.active_orders);
+                }
                 if (resultDiv) resultDiv.style.display = 'block';
-                startPolling(orderNumber);
-            } else {
+                if (!silent) startPolling(orderNumber);
+            } else if (!silent) {
                 showToast(res.message || 'Pesanan tidak ditemukan.', 'error');
             }
         })
         .catch(() => {
-            if (loadingDiv) loadingDiv.style.display = 'none';
-            showToast('Gagal mengambil data pesanan.', 'error');
+            isPollingTrack = false;
+            if (!silent) {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                showToast('Gagal mengambil data pesanan.', 'error');
+            }
         });
 }
 
@@ -107,7 +150,19 @@ function renderTracking(order) {
             </div>`).join('');
     }
 
-    // Notify if status changed
+    // Notify if payment status changed
+    if (lastPaymentStatus && lastPaymentStatus !== order.payment_status) {
+        if (order.payment_status === 'confirmed') {
+            showToast('Pembayaran Dikonfirmasi ✅', 'success', 5000);
+            try { createSound(); } catch(e) {}
+        } else if (order.payment_status === 'rejected') {
+            showToast('Pembayaran Ditolak ❌', 'error', 5000);
+            try { createSound(); } catch(e) {}
+        }
+    }
+    lastPaymentStatus = order.payment_status;
+
+    // Notify if order status changed
     if (lastStatus && lastStatus !== order.order_status) {
         const labels = { accepted:'Pesanan Diterima ✅', processing:'Sedang Diproses 🍳', completed:'Pesanan Selesai 🎉', cancelled:'Pesanan Dibatalkan ❌' };
         const msg = labels[order.order_status] || 'Status pesanan berubah';
@@ -138,12 +193,19 @@ function renderTracking(order) {
 
 function startPolling(orderNumber) {
     stopPolling();
-    trackingInterval = setInterval(() => trackOrder(orderNumber), 8000);
+    trackingInterval = setInterval(() => trackOrder(orderNumber, true), 1500);
 }
 
 function stopPolling() {
     if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
 }
+
+window.addEventListener('focus', () => {
+    if (currentTrackedOrder) trackOrder(currentTrackedOrder, true);
+});
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && currentTrackedOrder) trackOrder(currentTrackedOrder, true);
+});
 
 // Init tracking form
 const trackForm = document.getElementById('trackingForm');

@@ -57,7 +57,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php if ($n['order_number']): ?>
             <a href="<?= APP_URL ?>/cashier/orders.php" class="d-inline-block mt-2 text-decoration-none"
                style="font-size:.8rem;color:var(--primary);font-weight:600">
-              <i class="fa-solid fa-arrow-right me-1"></i>Lihat Pesanan #<?= e($n['order_number']) ?>
+              Lihat Pesanan #<?= e($n['order_number']) ?>
             </a>
             <?php endif; ?>
           </div>
@@ -77,4 +77,4 @@ require_once __DIR__ . '/../includes/header.php';
 const APP_URL    = '<?= APP_URL ?>';
 const CSRF_TOKEN = '<?= generateCSRF() ?>';
 </script>
-<script src="<?= APP_URL ?>/assets/js/cashier.js"></script>
+<script src="<?= APP_URL ?>/assets/js/cashier.js?v=<?= APP_VERSION ?>"></script>

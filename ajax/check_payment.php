@@ -125,7 +125,9 @@ try {
         }
 
         $order = db()->fetch("SELECT * FROM orders WHERE id=?", [$orderId]);
+        session_write_close();
     } else {
+        session_write_close();
         $orderId = (int)$order['id'];
 
         // Sync customer info if user typed/updated form fields

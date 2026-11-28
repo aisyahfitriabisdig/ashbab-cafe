@@ -126,7 +126,7 @@ require_once __DIR__ . '/includes/header.php';
 <div class="container">
     <div class="d-flex align-items-center mb-4" data-aos="fade-up">
         <a href="<?= APP_URL ?>/cart.php" class="btn btn-sm me-3" style="background:var(--accent);color:var(--primary);border-radius:50px;padding:8px 18px;font-weight:600">
-            <i class="fa-solid fa-arrow-left me-1"></i>Keranjang
+            Keranjang
         </a>
         <h3 class="fw-800 mb-0">Checkout</h3>
     </div>
@@ -322,9 +322,13 @@ function checkPaymentStatus() {
         });
 }
 
-// Start automatic polling immediately & every 2.5 seconds
+// Start automatic polling immediately & every 1.5 seconds (plus on window focus)
 checkPaymentStatus();
-paymentPollTimer = setInterval(checkPaymentStatus, 2500);
+paymentPollTimer = setInterval(checkPaymentStatus, 1500);
+window.addEventListener('focus', checkPaymentStatus);
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkPaymentStatus();
+});
 
 // Sync customer details automatically as they type
 ['customerName', 'customerPhone', 'tableNumber'].forEach(id => {

@@ -10,11 +10,21 @@
 // ============================================================
 let notifCount = 0;
 let notifInit  = false;
+let adminOrdersHash = '';
+let isPollingAdmin  = false;
 
 function pollNotifications() {
-    fetch(APP_URL + '/ajax/notifications.php?role=admin')
+    if (isPollingAdmin) return;
+    isPollingAdmin = true;
+
+    const urlParams    = new URLSearchParams(window.location.search);
+    const filterStatus = urlParams.get('status') || '';
+    const filterDate   = urlParams.get('date')   || '';
+
+    fetch(APP_URL + '/ajax/notifications.php?role=admin&filter_status=' + encodeURIComponent(filterStatus) + '&filter_date=' + encodeURIComponent(filterDate) + '&_t=' + Date.now())
         .then(r => r.json())
         .then(res => {
+            isPollingAdmin = false;
             if (!res.success) return;
             const badge = document.getElementById('notifBadge');
             const list  = document.getElementById('notifList');
@@ -49,8 +59,45 @@ function pollNotifications() {
             }
             notifCount = count;
             notifInit  = true;
+
+            // Live DOM sync for Admin Dashboard & Admin Orders Table without reload
+            if (res.orders_hash && res.orders_hash !== adminOrdersHash) {
+                adminOrdersHash = res.orders_hash;
+
+                const recentBody = document.getElementById('adminRecentOrdersBody');
+                if (recentBody && typeof res.admin_recent_html === 'string') {
+                    recentBody.innerHTML = res.admin_recent_html;
+                }
+
+                const ordersBody  = document.getElementById('adminOrdersBody');
+                const countBadge  = document.getElementById('adminOrdersCountBadge');
+                if (countBadge && typeof res.admin_orders_count === 'number') {
+                    countBadge.textContent = res.admin_orders_count + ' pesanan';
+                }
+                if (ordersBody && typeof res.admin_orders_html === 'string') {
+                    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable('#ordersTable')) {
+                        const dt = $('#ordersTable').DataTable();
+                        const page = dt.page();
+                        const search = dt.search();
+                        dt.destroy();
+                        ordersBody.innerHTML = res.admin_orders_html;
+                        initDataTable('ordersTable');
+                        const newDt = $('#ordersTable').DataTable();
+                        if (search) newDt.search(search);
+                        newDt.page(page).draw('page');
+                    } else {
+                        ordersBody.innerHTML = res.admin_orders_html;
+                    }
+                }
+
+                if (typeof currentOpenOrderId !== 'undefined' && currentOpenOrderId > 0 && typeof viewOrder === 'function') {
+                    viewOrder(currentOpenOrderId, true);
+                }
+            }
         })
-        .catch(() => {});
+        .catch(() => {
+            isPollingAdmin = false;
+        });
 }
 
 function markNotifRead(id) {
@@ -69,10 +116,14 @@ function markAllRead() {
     }).then(() => pollNotifications());
 }
 
-// Start polling
+// Start real-time polling (every 1.5s + on window focus)
 if (typeof APP_URL !== 'undefined') {
     pollNotifications();
-    setInterval(pollNotifications, 10000);
+    setInterval(pollNotifications, 1500);
+    window.addEventListener('focus', pollNotifications);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollNotifications();
+    });
 }
 
 // ============================================================
@@ -132,7 +183,7 @@ function toggleMenuStatus(id, currentStatus) {
 }
 
 // ============================================================
-// Order Management
+// Order Management - Instant Real-Time DOM Update
 // ============================================================
 function updateOrderStatus(orderId, status) {
     ajaxPost(APP_URL + '/ajax/update_order_status.php', {
@@ -140,7 +191,8 @@ function updateOrderStatus(orderId, status) {
     }, res => {
         if (res.success) {
             showToast('Status pesanan diperbarui.', 'success');
-            setTimeout(() => location.reload(), 800);
+            adminOrdersHash = '';
+            pollNotifications();
         } else {
             alertError(res.message || 'Gagal update status.');
         }
@@ -162,8 +214,13 @@ function confirmPayment(orderId) {
             ajaxPost(APP_URL + '/ajax/update_order_status.php', {
                 order_id: orderId, payment_action:'confirm', csrf_token: CSRF_TOKEN
             }, res => {
-                if (res.success) { alertSuccess('Pembayaran dikonfirmasi.'); setTimeout(() => location.reload(), 1000); }
-                else alertError(res.message);
+                if (res.success) {
+                    showToast('Pembayaran dikonfirmasi.', 'success');
+                    adminOrdersHash = '';
+                    pollNotifications();
+                } else {
+                    alertError(res.message);
+                }
             });
         }
     });
@@ -185,8 +242,13 @@ function rejectPayment(orderId) {
             ajaxPost(APP_URL + '/ajax/update_order_status.php', {
                 order_id: orderId, payment_action:'reject', reason: result.value, csrf_token: CSRF_TOKEN
             }, res => {
-                if (res.success) { alertSuccess('Pembayaran ditolak.'); setTimeout(() => location.reload(), 1000); }
-                else alertError(res.message);
+                if (res.success) {
+                    showToast('Pembayaran ditolak.', 'info');
+                    adminOrdersHash = '';
+                    pollNotifications();
+                } else {
+                    alertError(res.message);
+                }
             });
         }
     });

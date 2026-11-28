@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <?php if ($menu['total_sold'] > 0): ?>
                     <span style="position:absolute;top:12px;left:12px;background:var(--primary);color:white;padding:4px 10px;border-radius:50px;font-size:.72rem;font-weight:700">
-                        🔥 <?= $menu['total_sold'] ?>x terjual
+                        <?= $menu['total_sold'] ?>x terjual
                     </span>
                     <?php endif; ?>
 
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         Nikmati berbagai promo menarik setiap hari. Pesan sekarang dan dapatkan pengalaman kafe terbaik.
                     </p>
                     <a href="<?= APP_URL ?>/menu.php" class="btn btn-dark fw-700 rounded-pill px-4 py-2">
-                        <i class="fa-solid fa-arrow-right me-2"></i>Pesan Sekarang
+                        Pesan Sekarang
                     </a>
                 </div>
             </div>
