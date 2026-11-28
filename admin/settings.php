@@ -68,6 +68,33 @@ require_once __DIR__ . '/../includes/header.php';
                 <label class="admin-form-label">Teks Footer</label>
                 <textarea class="admin-input" name="footer_text" rows="2"><?= e($settings['footer_text']??'') ?></textarea>
               </div>
+              <?php $extraCfg = getMenuBgConfig(); ?>
+              <div class="col-12 pt-2">
+                <hr class="my-2">
+                <h6 class="fw-700 mb-3"><i class="fa-regular fa-clock me-2" style="color:var(--primary)"></i>Jam Operasional (Tampil di Footer)</h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="admin-form-label">Label Hari 1</label>
+                    <input type="text" class="admin-input" name="hours_weekday_label" value="<?= e($extraCfg['hours_weekday_label'] ?? 'Senin – Jumat') ?>" placeholder="Contoh: Senin – Jumat">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="admin-form-label">Jam Operasional 1</label>
+                    <input type="text" class="admin-input" name="hours_weekday_time" value="<?= e($extraCfg['hours_weekday_time'] ?? '08.00 – 22.00') ?>" placeholder="Contoh: 08.00 – 22.00">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="admin-form-label">Label Hari 2</label>
+                    <input type="text" class="admin-input" name="hours_weekend_label" value="<?= e($extraCfg['hours_weekend_label'] ?? 'Sabtu – Minggu') ?>" placeholder="Contoh: Sabtu – Minggu">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="admin-form-label">Jam Operasional 2</label>
+                    <input type="text" class="admin-input" name="hours_weekend_time" value="<?= e($extraCfg['hours_weekend_time'] ?? '08.00 – 23.00') ?>" placeholder="Contoh: 08.00 – 23.00">
+                  </div>
+                  <div class="col-md-12">
+                    <label class="admin-form-label">Badge Status Operasional <small class="text-muted">(kosongkan jika ingin disembunyikan)</small></label>
+                    <input type="text" class="admin-input" name="hours_badge_text" value="<?= e($extraCfg['hours_badge_text'] ?? 'Buka Setiap Hari') ?>" placeholder="Contoh: Buka Setiap Hari">
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

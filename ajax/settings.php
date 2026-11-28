@@ -211,16 +211,27 @@ foreach ($bucketKeys as $bKey) {
     $finalBuckets['images_' . $bKey] = array_values($list);
 }
 
+$hoursWeekdayLabel = clean($_POST['hours_weekday_label'] ?? '');
+$hoursWeekdayTime  = clean($_POST['hours_weekday_time']  ?? '');
+$hoursWeekendLabel = clean($_POST['hours_weekend_label'] ?? '');
+$hoursWeekendTime  = clean($_POST['hours_weekend_time']  ?? '');
+$hoursBadgeText    = clean($_POST['hours_badge_text']    ?? '');
+
 $menuBgConfigJson = json_encode([
-    'enabled'         => $menuBgEnabled,
-    'mode'            => $menuBgMode,
-    'position'        => $menuBgPosition,
-    'size'            => $menuBgSize,
-    'attachment'      => $menuBgAttachment,
-    'overlay_opacity' => $menuBgOpacity,
-    'images_shared'   => $finalBuckets['images_shared'],
-    'images_home'     => $finalBuckets['images_home'],
-    'images_menu'     => $finalBuckets['images_menu'],
+    'enabled'             => $menuBgEnabled,
+    'mode'                => $menuBgMode,
+    'position'            => $menuBgPosition,
+    'size'                => $menuBgSize,
+    'attachment'          => $menuBgAttachment,
+    'overlay_opacity'     => $menuBgOpacity,
+    'images_shared'       => $finalBuckets['images_shared'],
+    'images_home'         => $finalBuckets['images_home'],
+    'images_menu'         => $finalBuckets['images_menu'],
+    'hours_weekday_label' => $hoursWeekdayLabel !== '' ? $hoursWeekdayLabel : 'Senin – Jumat',
+    'hours_weekday_time'  => $hoursWeekdayTime  !== '' ? $hoursWeekdayTime  : '08.00 – 22.00',
+    'hours_weekend_label' => $hoursWeekendLabel !== '' ? $hoursWeekendLabel : 'Sabtu – Minggu',
+    'hours_weekend_time'  => $hoursWeekendTime  !== '' ? $hoursWeekendTime  : '08.00 – 23.00',
+    'hours_badge_text'    => $hoursBadgeText,
 ], JSON_UNESCAPED_SLASHES);
 
 if ($current) {

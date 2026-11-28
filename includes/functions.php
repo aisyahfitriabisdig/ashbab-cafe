@@ -376,15 +376,20 @@ function getSetting(string $key, string $default = ''): string {
 function getMenuBgConfig(): array {
     $settings = getSettings();
     $defaults = [
-        'enabled'         => true,
-        'mode'            => 'same', // 'same' | 'separate'
-        'position'        => 'center center',
-        'size'            => 'cover',
-        'attachment'      => 'scroll',
-        'overlay_opacity' => 75,
-        'images_shared'   => [],
-        'images_home'     => [],
-        'images_menu'     => [],
+        'enabled'             => true,
+        'mode'                => 'same', // 'same' | 'separate'
+        'position'            => 'center center',
+        'size'                => 'cover',
+        'attachment'          => 'scroll',
+        'overlay_opacity'     => 75,
+        'images_shared'       => [],
+        'images_home'         => [],
+        'images_menu'         => [],
+        'hours_weekday_label' => 'Senin – Jumat',
+        'hours_weekday_time'  => '08.00 – 22.00',
+        'hours_weekend_label' => 'Sabtu – Minggu',
+        'hours_weekend_time'  => '08.00 – 23.00',
+        'hours_badge_text'    => 'Buka Setiap Hari',
     ];
 
     if (empty($settings['menu_bg_config'])) {
@@ -415,16 +420,29 @@ function getMenuBgConfig(): array {
         return array_values($out);
     };
 
+    $wdLabel = trim((string)($decoded['hours_weekday_label'] ?? ''));
+    $wdTime  = trim((string)($decoded['hours_weekday_time']  ?? ''));
+    $weLabel = trim((string)($decoded['hours_weekend_label'] ?? ''));
+    $weTime  = trim((string)($decoded['hours_weekend_time']  ?? ''));
+    $badgeTx = array_key_exists('hours_badge_text', $decoded)
+        ? trim((string)$decoded['hours_badge_text'])
+        : $defaults['hours_badge_text'];
+
     return [
-        'enabled'         => !empty($decoded['enabled']),
-        'mode'            => ($decoded['mode'] ?? 'same') === 'separate' ? 'separate' : 'same',
-        'position'        => $pos,
-        'size'            => $sz,
-        'attachment'      => $att,
-        'overlay_opacity' => $op,
-        'images_shared'   => $cleanList($decoded['images_shared'] ?? []),
-        'images_home'     => $cleanList($decoded['images_home'] ?? []),
-        'images_menu'     => $cleanList($decoded['images_menu'] ?? []),
+        'enabled'             => !empty($decoded['enabled']),
+        'mode'                => ($decoded['mode'] ?? 'same') === 'separate' ? 'separate' : 'same',
+        'position'            => $pos,
+        'size'                => $sz,
+        'attachment'          => $att,
+        'overlay_opacity'     => $op,
+        'images_shared'       => $cleanList($decoded['images_shared'] ?? []),
+        'images_home'         => $cleanList($decoded['images_home'] ?? []),
+        'images_menu'         => $cleanList($decoded['images_menu'] ?? []),
+        'hours_weekday_label' => $wdLabel !== '' ? $wdLabel : $defaults['hours_weekday_label'],
+        'hours_weekday_time'  => $wdTime  !== '' ? $wdTime  : $defaults['hours_weekday_time'],
+        'hours_weekend_label' => $weLabel !== '' ? $weLabel : $defaults['hours_weekend_label'],
+        'hours_weekend_time'  => $weTime  !== '' ? $weTime  : $defaults['hours_weekend_time'],
+        'hours_badge_text'    => $badgeTx,
     ];
 }
 
@@ -488,6 +506,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function renderSiteFooter(): string {
     $settings   = getSettings();
+    $extraCfg   = getMenuBgConfig();
     $cafeName   = e($settings['cafe_name'] ?? 'ASHBAB CAFE');
     $address    = e($settings['address'] ?? 'Jl. Contoh No. 123, Indonesia');
     $phone      = e($settings['phone'] ?? '08123456789');
@@ -495,6 +514,15 @@ function renderSiteFooter(): string {
     $footerText = e($settings['footer_text'] ?? ('© ' . date('Y') . ' ' . ($settings['cafe_name'] ?? 'ASHBAB CAFE') . '. All Rights Reserved.'));
     $logoUrl    = !empty($settings['logo']) ? e(assetUrl($settings['logo'])) : (APP_URL . '/assets/uploads/ashbab_logo.png');
     $appUrl     = APP_URL;
+
+    $wdLabel = e($extraCfg['hours_weekday_label'] ?? 'Senin – Jumat');
+    $wdTime  = e($extraCfg['hours_weekday_time']  ?? '08.00 – 22.00');
+    $weLabel = e($extraCfg['hours_weekend_label'] ?? 'Sabtu – Minggu');
+    $weTime  = e($extraCfg['hours_weekend_time']  ?? '08.00 – 23.00');
+    $badgeTx = trim((string)($extraCfg['hours_badge_text'] ?? 'Buka Setiap Hari'));
+    $badgeHtml = $badgeTx !== ''
+        ? '<div class="footer-open-badge"><span class="footer-open-dot"></span> ' . e($badgeTx) . '</div>'
+        : '';
 
     return <<<HTML
 <footer class="site-footer">
@@ -542,18 +570,16 @@ function renderSiteFooter(): string {
             <div class="col-lg-3 col-md-6 col-6">
                 <h6 class="footer-heading">Jam Operasional</h6>
                 <ul class="footer-hours list-unstyled mb-3">
-                    <li class="d-flex justify-content-between">
-                        <span>Senin – Jumat</span>
-                        <strong class="text-white">08.00 – 22.00</strong>
+                    <li class="d-flex justify-content-between gap-2">
+                        <span>{$wdLabel}</span>
+                        <strong class="text-white text-end">{$wdTime}</strong>
                     </li>
-                    <li class="d-flex justify-content-between">
-                        <span>Sabtu – Minggu</span>
-                        <strong class="text-white">08.00 – 23.00</strong>
+                    <li class="d-flex justify-content-between gap-2">
+                        <span>{$weLabel}</span>
+                        <strong class="text-white text-end">{$weTime}</strong>
                     </li>
                 </ul>
-                <div class="footer-open-badge">
-                    <span class="footer-open-dot"></span> Buka Setiap Hari
-                </div>
+                {$badgeHtml}
             </div>
 
             <!-- Contact Info -->

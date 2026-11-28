@@ -18,9 +18,9 @@ $pageTitle = isset($pageTitle) ? e($pageTitle) . ' | ' . $cafeName : $cafeName;
     <meta name="theme-color" content="#FFD700">
     <title><?= $pageTitle ?></title>
 
-    <!-- Favicon (Hardcoded from assets/uploads/logo) -->
-    <link rel="icon" type="image/jpeg" href="<?= APP_URL ?>/assets/uploads/logo/6a36147b46fa5_1781929083.jpeg">
-    <link rel="apple-touch-icon" href="<?= APP_URL ?>/assets/uploads/logo/6a36147b46fa5_1781929083.jpeg">
+    <!-- Favicon (Hardcoded circular PNG from assets/uploads/logo) -->
+    <link rel="icon" type="image/png" href="<?= APP_URL ?>/assets/uploads/logo/favicon_round.png?v=2">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/assets/uploads/logo/favicon_round.png?v=2">
 
     <!-- Preconnect CDN -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
