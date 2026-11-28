@@ -3,10 +3,11 @@
  * ASHBAB CAFE - Dynamic XML Sitemap for Google Search Console
  * File: sitemap.php (routed from /sitemap.xml)
  */
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/config.php';
 
 header('Content-Type: application/xml; charset=utf-8');
 header('Cache-Control: public, max-age=3600');
+header('X-Robots-Tag: noindex');
 
 $baseUrl = rtrim(APP_URL ?: 'https://ashbabcafe.my.id', '/');
 $today   = date('Y-m-d');
